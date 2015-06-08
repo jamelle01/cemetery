@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+<style type="text/css">
+#hdr-row {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+#search-btn {
+  margin-top: 4px;
+}
+.hdr-text {
+  font-size: 22pt;
+  color: black;
+}
+.hdr-text-1 {
+  font-size: 22pt;
+  color: grey;
+}
+.hdr-text-2 {
+  font-size: 22pt;
+  color: lightBlue;
+}
+</style>
+<script src="http://maps.googleapis.com/maps/api/js"></script>
+<script>
+var map;
+// This is only one infowindow.  We will just move it around.  Callbacks will
+// set the content.
+var infowindow;
+var markers;
+function initialize() {
+  // Map props can be hardcoded.  The cemetery is unlikely to get up and move away.
+  var mapProp = {
+    center:new google.maps.LatLng(42.634739, -95.174137),
+    zoom:18,
+    mapTypeId:google.maps.MapTypeId.SATELLITE
+  };
+
+  map = new google.maps.Map(document.getElementById("googleMap"), mapProp);
+  infowindow = new google.maps.InfoWindow(); // content prop to be set later
+
+
+  markers = new Array();
+
+  // Bit Pit "Easter Egg"
+  placeMarker( new google.maps.LatLng(42.641333, -95.211234) );
+}
+
+function clearMarkers() {
+  for (var i = 0; i < markers.length; i++) {
+    markers[i].setMap(null);
+    markers[i] = null;
+  }
+  while (markers.length > 0) {
+    markers.pop();
+  }
+}
+
+function updateMarkers(res) {
+    var ary = eval(res);
+    for (var i = 0; i < ary.length; i++) {
+        placeMarker(ary[i]);
+    }
+    if (ary.length == 1) {
+        // Single marker: go ahead and open its infowindow.
+        openInfowindow(markers[0]);
+    }
+}
+
+function openInfowindow(marker) {
+    infowindow.setContent("Here lies:<br/>" + marker.firstName + " "
+                                            + marker.lastName);
+    infowindow.open(map, marker);
+}
+
+function placeMarker(burial) {
+    var marker=new google.maps.Marker({
+        position: new google.maps.LatLng(burial.lat, burial.lng),
+        map: map
+    });
+    marker.firstName = burial.firstName;
+    marker.lastName = burial.lastName;
+    markers.push(marker);
+    google.maps.event.addListener(marker, 'click', function(evt) {
+        openInfowindow(this);
+    });
+}
+
+
+google.maps.event.addDomListener(window, 'load', initialize);
+</script>
+</head>
+
+<body>
+<div class="container">
+  <div id="hdr-row" class="row">
+    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+      <span class="hdr-text-1">storm</span><span class="hdr-text-2">lake</span> &nbsp;<span class="hdr-text">cemetery</span>
+    </div>
+
+
+    <div class="btn-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+      <button type="button" id="search-btn" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+        Search <span class="caret"></span>
+      </button>
+      <div class="dropdown-menu" role="menu" style="padding: 8px;">
+        <form>
+          <p>Search for a loved one by entering information into any of the following fields.</p>
+          <p>Last Name: <input id="lastName" type="text"></p>
+          <p>First Name: <input type="text"></p>
+          <p>Place of Birth: <input type="text"></p>
+          <p>Year of Death: <input type="text"></p>
+          <input id="do-search-btn" type="button" value="Find" />
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="row">
+    <div id="googleMap" style="height:530px;"></div>
+  </div>
+
+</div>
+
+<script src="/jquery/dist/jquery.min.js"></script>
+<script src="/bootstrap/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+
+function handleSearchResponse(res) {
+    // Remove 'searching' feedback and hide dropdown-menu
+    // If error, show message (example: "No one matching criteria found")
+    // Else, clearMarkers, then iterate through results and placeMarker each
+    //          Also, if only one result, open infowindow...
+    clearMarkers();
+    updateMarkers(res);
+}
+
+$(document).ready(function() {
+    $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
+        // Prevent clicks on the dropdown from dismissing the dropdown.
+        e.stopPropagation();
+    });
+
+    $('#do-search-btn').click(function(e) {
+        // Make 'searching' feedback, probably next to do-search-btn.
+        // Fire jQuery Ajax req
+        $.post('/api/search', { lastName: $('#lastName').get(0).value }, handleSearchResponse);
+    });
+
+});
+
+    
+</script>
+</body>
+
+</html> 
