@@ -13,6 +13,9 @@
 #search-btn {
   margin-top: 4px;
 }
+#reset-btn {
+  margin-top: 4px;
+}
 .hdr-text {
   font-size: 22pt;
   color: black;
@@ -25,6 +28,15 @@
   font-size: 22pt;
   color: lightBlue;
 }
+.btn-toolbar {
+  margin-left: 0px;
+  padding: 6px;
+  padding-top: 4px;
+  background-color: lightGrey;
+}
+.dropdown-menu {
+  padding: 8px;
+}
 </style>
 <script src="http://maps.googleapis.com/maps/api/js"></script>
 <script>
@@ -33,10 +45,14 @@ var map;
 // set the content.
 var infowindow;
 var markers;
+var defaultCenter;
 function initialize() {
+
+  defaultCenter = new google.maps.LatLng(42.634739, -95.174137);
+
   // Map props can be hardcoded.  The cemetery is unlikely to get up and move away.
   var mapProp = {
-    center:new google.maps.LatLng(42.634739, -95.174137),
+    center: defaultCenter,
     zoom:18,
     mapTypeId:google.maps.MapTypeId.SATELLITE
   };
@@ -73,8 +89,13 @@ function updateMarkers(res) {
 }
 
 function openInfowindow(marker) {
-    infowindow.setContent("Here lies:<br/>" + marker.firstName + " "
-                                            + marker.lastName);
+    var content = "<h4>" + marker.first_name + " " + marker.last_name + "</h4>"
+                + "Born: " + marker.birth_date
+                + "<br/>"
+                + "Died: " + marker.death_date;
+    if (marker.img !== undefined)
+        content = content + "<br/><img style=\"width: 200px;\" src=\"" + marker.img + "\" />" 
+    infowindow.setContent(content);
     infowindow.open(map, marker);
 }
 
@@ -83,8 +104,30 @@ function placeMarker(burial) {
         position: new google.maps.LatLng(burial.lat, burial.lng),
         map: map
     });
-    marker.firstName = burial.firstName;
-    marker.lastName = burial.lastName;
+    // Add info to the marker so that we can display it later in the infowindow.
+    marker.sd_type =       burial.sd_type;
+    marker.sd =            burial.sd;
+    marker.lot =           burial.lot;
+    marker.space =         burial.space;
+    marker.lot_owner =     burial.lot_owner;
+    marker.year_purch =    burial.year_purch;
+    marker.first_name =    burial.first_name;
+    marker.last_name =     burial.last_name;
+    marker.sex =           burial.sex;
+    marker.birth_date =    burial.birth_date;
+    marker.birth_place =   burial.birth_place;
+    marker.death_date =    burial.death_date;
+    marker.age =           burial.age;
+    marker.death_place =   burial.death_place;
+    marker.death_cause =   burial.death_cause;
+    marker.burial_date =   burial.burial_date;
+    marker.notes =         burial.notes;
+    marker.more_notes =    burial.more_notes;
+    marker.hidden_notes =  burial.hidden_notes;
+    marker.lat =           burial.lat;
+    marker.lng =           burial.lng;           
+
+    marker.img = burial.img;
     markers.push(marker);
     google.maps.event.addListener(marker, 'click', function(evt) {
         openInfowindow(this);
@@ -99,27 +142,37 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <body>
 <div class="container">
   <div id="hdr-row" class="row">
-    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
       <span class="hdr-text-1">storm</span><span class="hdr-text-2">lake</span> &nbsp;<span class="hdr-text">cemetery</span>
     </div>
 
 
-    <div class="btn-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
-      <button type="button" id="search-btn" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-        Search <span class="caret"></span>
-      </button>
-      <div class="dropdown-menu" role="menu" style="padding: 8px;">
-        <form>
-          <p>Search for a loved one by entering information into any of the following fields.</p>
-          <p>Last Name: <input id="lastName" type="text"></p>
-          <p>First Name: <input type="text"></p>
-          <p>Place of Birth: <input type="text"></p>
-          <p>Year of Death: <input type="text"></p>
-          <input id="do-search-btn" type="button" value="Find" />
-        </form>
+    <div class="btn-toolbar col-xs-12 col-sm-12 col-md-12 col-lg-12">
+
+      <div class="btn-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+        <button type="button" class="btn btn-default" id="reset-btn">
+          Reset
+        </button>
+        <button type="button" id="search-btn" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+          Search <span class="caret"></span>
+        </button>
+        <div class="dropdown-menu" role="menu">
+          <form>
+            <p>Search for a loved one by entering information into any of the following fields.</p>
+            <p>First Name: <input id="first_name" type="text"></p>
+            <p>Last Name: <input id="last_name" type="text"></p>
+            <p>Place of Birth: <input id="birth_place" type="text"></p>
+            <p>Year of Birth: <input id="birth_date" type="text"></p>
+            <p>Place of Death: <input id="death_place" type="text"></p>
+            <p>Year of Death: <input id="death_date" type="text"></p>
+            <p>Owner of Lot: <input id="lot_owner" type="text"></p>
+            <input id="do-search-btn" type="button" value="Find" />
+          </form>
+        </div>
       </div>
 
     </div>
+
   </div>
 
   <div class="row">
@@ -137,8 +190,15 @@ function handleSearchResponse(res) {
     // If error, show message (example: "No one matching criteria found")
     // Else, clearMarkers, then iterate through results and placeMarker each
     //          Also, if only one result, open infowindow...
-    clearMarkers();
-    updateMarkers(res);
+    if (res != "none") {
+        console.log('clearing markers');
+        clearMarkers();
+        console.log('updating markers');
+        updateMarkers(res);
+    }
+    console.log('toggling dropdown');
+    $('#search-btn').dropdown('toggle');
+    console.log('done');
 }
 
 $(document).ready(function() {
@@ -150,12 +210,35 @@ $(document).ready(function() {
     $('#do-search-btn').click(function(e) {
         // Make 'searching' feedback, probably next to do-search-btn.
         // Fire jQuery Ajax req
-        $.post('/api/search', { lastName: $('#lastName').get(0).value }, handleSearchResponse);
+        $.post( '/api/search',
+                {
+                    first_name:  $('#first_name').get(0).value,
+                    last_name:   $('#last_name').get(0).value,
+                    birth_place: $('#birth_place').get(0).value,
+                    birth_date:  $('#birth_date').get(0).value,
+                    death_place: $('#death_place').get(0).value,
+                    death_date:  $('#death_date').get(0).value,
+                    lot_owner:   $('#lot_owner').get(0).value
+                },
+                handleSearchResponse );
     });
+
+
+    $('#reset-btn').click(function(e) {
+        clearMarkers();
+        map.panTo(defaultCenter);
+    });
+
+    $('.btn-group').on('show.bs.dropdown', function () {
+        console.log('got .dropdown-menu show.bs.dropdown');
+    })    
+    $('.btn-group').on('hide.bs.dropdown', function () {
+        console.log('got .dropdown-menu hide.bs.dropdown');
+    })    
 
 });
 
-    
+
 </script>
 </body>
 
