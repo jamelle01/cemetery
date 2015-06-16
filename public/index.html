@@ -95,6 +95,9 @@ function openInfowindow(marker) {
                 + "Died: " + marker.death_date;
     if (marker.img !== undefined)
         content = content + "<br/><img style=\"width: 200px;\" src=\"" + marker.img + "\" />" 
+    // FIXME Following code is for demo purposes only.  It must be removed prior to production.
+    else if (marker.last_name == "Anderson")
+        content = content + "<br/><img style=\"width: 200px;\" src=\"/images/hs-anderson.jpg\" />" 
     infowindow.setContent(content);
     infowindow.open(map, marker);
 }
@@ -126,8 +129,7 @@ function placeMarker(burial) {
     marker.hidden_notes =  burial.hidden_notes;
     marker.lat =           burial.lat;
     marker.lng =           burial.lng;           
-
-    marker.img = burial.img;
+    marker.img =           burial.img;
     markers.push(marker);
     google.maps.event.addListener(marker, 'click', function(evt) {
         openInfowindow(this);
