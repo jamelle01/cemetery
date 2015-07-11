@@ -108,7 +108,7 @@ function doSearch(req, res, params) {
           console.log(err);
           res.send("none");
         } else {
-          // Success.  Send data.
+          // Success.  Send data.  Data could be an array or it could be "none".
           console.log('adding data');
           var burials = new Array();
           rows.forEach(function(row) {
@@ -137,7 +137,11 @@ function doSearch(req, res, params) {
             } );
           });
           console.log('sending data');
-          res.send( JSON.stringify(burials) );
+          if (burials.length == 0) {
+            res.send("none");
+          } else {
+            res.send( JSON.stringify(burials) );
+          }
         }
       });
     console.log('end of method... shouldn\'t see this');

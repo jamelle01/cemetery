@@ -197,6 +197,8 @@ function handleSearchResponse(res) {
         clearMarkers();
         console.log('updating markers');
         updateMarkers(res);
+    } else {
+        console.log("We ain't found squat!");
     }
     console.log('toggling dropdown');
     $('#search-btn').dropdown('toggle');
