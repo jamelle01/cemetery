@@ -192,13 +192,13 @@ function handleSearchResponse(res) {
     // If error, show message (example: "No one matching criteria found")
     // Else, clearMarkers, then iterate through results and placeMarker each
     //          Also, if only one result, open infowindow...
-    if (res != "none") {
+    if (res.length == 0) {
+        console.log("We ain't found squat!");
+    } else {
         console.log('clearing markers');
         clearMarkers();
         console.log('updating markers');
         updateMarkers(res);
-    } else {
-        console.log("We ain't found squat!");
     }
     console.log('toggling dropdown');
     $('#search-btn').dropdown('toggle');

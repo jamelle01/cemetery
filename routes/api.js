@@ -137,11 +137,7 @@ function doSearch(req, res, params) {
             } );
           });
           console.log('sending data');
-          if (burials.length == 0) {
-            res.send("none");
-          } else {
-            res.send( JSON.stringify(burials) );
-          }
+          res.send( JSON.stringify(burials) );
         }
       });
     console.log('end of method... shouldn\'t see this');
