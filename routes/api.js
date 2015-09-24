@@ -3,58 +3,9 @@ var router = express.Router();
 var multer  = require('multer');
 var upload = multer({ dest: 'uploads/' });
 
-// All URI's here are prefixed by /api
-
-
-function mockSearch(req, res, params) {
-/*
-  console.log("# params = " + req.params.lastName);
-  console.log("# query = " + req.query.lastName);
-  console.log("# body = " + req.body.lastName);
-  console.log(req.route);
-  console.log("lastName = " + req.param('lastName'));
-  res.send('respond with a resource');
-*/
-  var lastName = params['last_name'];
-  var ary = [];
-  if (lastName == "Gross") {
-    // One dude.
-    ary.push( { firstName: "Ruth",
-                lastName: "Gross",
-                lat: 42.634859,
-                lng: -95.174137,
-                img: '/images/hs-gross.jpg'
-              } );
-    res.send( JSON.stringify(ary) );
-  } else if (lastName == "Film") {
-    // One dude, no image.
-    ary.push( { firstName: "Sir Not Appearing in this",
-                lastName: "Film",
-                lat: 42.634859,
-                lng: -95.174337
-                // No image
-              } );
-    res.send( JSON.stringify(ary) );
-  } else if (lastName == "O'Neil") {
-    // Multi-dudes
-    ary.push( { firstName: "John",
-                lastName: "O'Neil",
-                lat: 42.635209,
-                lng: -95.175525,
-                img: '/images/hs-oneil.jpg'
-              } );
-    ary.push( { firstName: "Margaret",
-                lastName: "O'Neil",
-                lat: 42.635159,
-                lng: -95.175625,
-                img: '/images/hs-oneil.jpg'
-              } );
-    res.send( JSON.stringify(ary) );
-  } else {
-    // Eventual error condition.
-    res.send("none");
-  }
-}
+/*-------------------------------------------------------------------
+ Helper methods
+-------------------------------------------------------------------*/
 
 function getColumns(params) {
   var colNames = new Array();
@@ -69,21 +20,19 @@ function getColumns(params) {
 }
 
 // Performs a SELECT...AND query on the DB.
-// Returns JSON or "none".
+// Returns JSON list, which could be an empty list.
 // Client should prevent requests involving no columns,
 // but we will program defensively here.  No columns would
 // return all records, which we do not want to do, so 
 // rather we will return an error.
 function doSearch(req, res, params) {
-  //mockSearch(req, res, params);
-/**/
   var ret = getColumns(params);
   var colNames = ret[0];
   var colValues = ret[1];
   if (colNames.length == 0) {
-    res.send("none");
+    res.send("[]");
   } else {
-    var sqlSelect = 'select sd_type, sd, lot, space, lot_owner, year_purch, first_name, last_name, sex, birth_date, birth_place, death_date, age, death_place, death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng ';
+    var sqlSelect = 'select id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, last_name, sex, birth_date, birth_place, death_date, age, death_place, death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng ';
 
     var sqlWhere = ' where ';
 
@@ -101,20 +50,17 @@ function doSearch(req, res, params) {
     console.log(colValues);
 
     var query = require('../utils/db-utils.js').queryfn();
-    console.log('calling query()');
 
     query(sql, colValues, 
       function(err, rows, result) {
-        console.log('in func');
         if (err) {
           console.log(err);
-          res.send("none");
+          res.send("[]");
         } else {
-          // Success.  Send data.  Data could be an array or it could be "none".
-          console.log('adding data');
           var burials = new Array();
           rows.forEach(function(row) {
             burials.push( {
+              id:            row.id,
               sd_type:       row.sd_type,
               sd:            row.sd,
               lot:           row.lot,
@@ -138,16 +84,17 @@ function doSearch(req, res, params) {
               lng:           row.lng           
             } );
           });
-          console.log('sending data');
           res.send( JSON.stringify(burials) );
         }
       });
-    console.log('end of method... shouldn\'t see this');
 
 
   }
-/**/
 }
+
+/*-------------------------------------------------------------------
+ Routes - all URI's are prefixed with /api
+-------------------------------------------------------------------*/
 
 // GET /api/search
 router.get('/search', function(req, res) {
@@ -160,7 +107,6 @@ router.post('/search', function(req, res) {
 });
 
 // POST /api/img-upload
-//   Processes multipart request with file sent as 'headstone_img'.
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
     var fs = require('fs');
     var query = require('../utils/db-utils.js').queryfn();
@@ -189,15 +135,14 @@ router.get('/img-download', function(req, res) {
           console.log(err);
           res.send(err);
         } else {
-          // FIXME send file....
-          // header is Content-Type: image/jpg
-          res.header("Content-Type", "image/jpg");
-          // FIXME try sending from a file that is a known JPG rather than
-          // from the DB
-          console.log(rows[0]);
-          res.send(rows[0].headstone_img);
-          //var img = require('fs').readFileSync("public/images/hs-anderson.jpg");
-          //res.send(img);
+          if (rows[0].headstone_img == null) {
+            res.header("Content-Type", "image/png");
+            var img = require('fs').readFileSync("public/images/no-image.png");
+            res.send(img);
+          } else {
+            res.header("Content-Type", "image/jpg");
+            res.send(rows[0].headstone_img);
+          }
         }
       });
 });
