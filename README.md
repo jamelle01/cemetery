@@ -29,3 +29,8 @@ Finally,
 ```
 db-migrate up
 ```
+
+## Populating the database
+
+In order to populate the database with data, developers must have access to cemetery data in the form of a CSV file.  This CSV file is not part of the GitHub repository.  The CSV file should reside at docs/cemetery.csv.  Then, the developer should enter the utils directory and type 'node db-populate.js'. 
+
