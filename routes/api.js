@@ -1,5 +1,7 @@
 var express = require('express');
 var router = express.Router();
+var multer  = require('multer');
+var upload = multer({ dest: 'uploads/' });
 
 // All URI's here are prefixed by /api
 
@@ -155,6 +157,49 @@ router.get('/search', function(req, res) {
 // POST /api/search
 router.post('/search', function(req, res) {
   doSearch(req, res, req.body);
+});
+
+// POST /api/img-upload
+//   Processes multipart request with file sent as 'headstone_img'.
+router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
+    var fs = require('fs');
+    var query = require('../utils/db-utils.js').queryfn();
+
+    var img = fs.readFileSync(req.file.path);
+
+    query("update burials set headstone_img = $1 where id = $2", [img, req.body.id], 
+      function(err, rows) {
+        if (err) {
+          console.log(err);
+          res.send(err);
+        } else {
+          fs.unlinkSync(req.file.path);
+          res.send("ok");
+        }
+      });
+});
+
+// GET /api/img-download
+router.get('/img-download', function(req, res) {
+    var query = require('../utils/db-utils.js').queryfn();
+
+    query("select headstone_img from burials where id = $1", [req.query.id], 
+      function(err, rows) {
+        if (err) {
+          console.log(err);
+          res.send(err);
+        } else {
+          // FIXME send file....
+          // header is Content-Type: image/jpg
+          res.header("Content-Type", "image/jpg");
+          // FIXME try sending from a file that is a known JPG rather than
+          // from the DB
+          console.log(rows[0]);
+          res.send(rows[0].headstone_img);
+          //var img = require('fs').readFileSync("public/images/hs-anderson.jpg");
+          //res.send(img);
+        }
+      });
 });
 
 module.exports = router;
