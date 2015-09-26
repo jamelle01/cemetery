@@ -3,10 +3,19 @@ var router = express.Router();
 var multer  = require('multer');
 var upload = multer({ dest: 'uploads/' });
 
+var svc = require('../services/burials.js');
+
 /*-------------------------------------------------------------------
  Helper methods
 -------------------------------------------------------------------*/
 
+/**
+ * Separates parameter names and values into separate Arrays so
+ * that they can be given to the burials service.
+ *
+ * @param params the HTTP parameters
+ * @return an Array of two items: the column names followed by the column values
+ */
 function getColumns(params) {
   var colNames = new Array();
   var colValues = new Array();
@@ -19,12 +28,16 @@ function getColumns(params) {
   return [colNames, colValues];
 }
 
-// Performs a SELECT...AND query on the DB.
-// Returns JSON list, which could be an empty list.
-// Client should prevent requests involving no columns,
-// but we will program defensively here.  No columns would
-// return all records, which we do not want to do, so 
-// rather we will return an error.
+/**
+ * Retrieves all burials as JSON for records whose DB column name/values match
+ * the HTTP params given.  This is a search function, so if no params are given,
+ * we will simply send an empty list (though, we would hope clients should prevent
+ * such meaningless requests).
+ *
+ * @param req the HTTP request
+ * @param res the HTTP response used to send a JSON Array back to the client
+ * @param params An abstraction that either refers to HTTP GET query or POST body params
+ */
 function doSearch(req, res, params) {
   var ret = getColumns(params);
   var colNames = ret[0];
@@ -32,63 +45,9 @@ function doSearch(req, res, params) {
   if (colNames.length == 0) {
     res.send("[]");
   } else {
-    var sqlSelect = 'select id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, last_name, sex, birth_date, birth_place, death_date, age, death_place, death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng ';
-
-    var sqlWhere = ' where ';
-
-    for (var ci = 0; ci < colNames.length; ci++) {
-      sqlWhere = sqlWhere + colNames[ci] + " = $" + (ci+1);
-      if (ci + 1 != colNames.length) {
-        sqlWhere = ", ";
-      }
-    }
-
-    var sql = sqlSelect + " from burials " + sqlWhere + ";";
-
-    console.log('sql:');
-    console.log(sql);
-    console.log(colValues);
-
-    var query = require('../utils/db-utils.js').queryfn();
-
-    query(sql, colValues, 
-      function(err, rows, result) {
-        if (err) {
-          console.log(err);
-          res.send("[]");
-        } else {
-          var burials = new Array();
-          rows.forEach(function(row) {
-            burials.push( {
-              id:            row.id,
-              sd_type:       row.sd_type,
-              sd:            row.sd,
-              lot:           row.lot,
-              space:         row.space,
-              lot_owner:     row.lot_owner,
-              year_purch:    row.year_purch,
-              first_name:    row.first_name,
-              last_name:     row.last_name,
-              sex:           row.sex,
-              birth_date:    row.birth_date,
-              birth_place:   row.birth_place,
-              death_date:    row.death_date,
-              age:           row.age,
-              death_place:   row.death_place,
-              death_cause:   row.death_cause,
-              burial_date:   row.burial_date,
-              notes:         row.notes,
-              more_notes:    row.more_notes,
-              hidden_notes:  row.hidden_notes,
-              lat:           row.lat,
-              lng:           row.lng           
-            } );
-          });
-          res.send( JSON.stringify(burials) );
-        }
-      });
-
-
+    svc.searchBurials(colNames, colValues, function(burialList) {
+      res.send( JSON.stringify(burialList) );
+    });
   }
 }
 
@@ -108,43 +67,34 @@ router.post('/search', function(req, res) {
 
 // POST /api/img-upload
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
-    var fs = require('fs');
-    var query = require('../utils/db-utils.js').queryfn();
-
-    var img = fs.readFileSync(req.file.path);
-
-    query("update burials set headstone_img = $1 where id = $2", [img, req.body.id], 
-      function(err, rows) {
-        if (err) {
-          console.log(err);
-          res.send(err);
-        } else {
-          fs.unlinkSync(req.file.path);
-          res.send("ok");
-        }
-      });
+  svc.uploadImage(req.file.path, req.body.id, function(success) {
+    if (success) {
+      res.send("ok");
+    } else {
+      res.send("error");
+    }
+  });
 });
 
 // GET /api/img-download
 router.get('/img-download', function(req, res) {
-    var query = require('../utils/db-utils.js').queryfn();
+  svc.downloadImage(req.query.id, function(image, success) {
+    if (success) {
+      res.header("Content-Type", "image/jpg");
+    } else {
+      res.header("Content-Type", "image/png");
+    }
+    res.send(image);
+  });
+});
 
-    query("select headstone_img from burials where id = $1", [req.query.id], 
-      function(err, rows) {
-        if (err) {
-          console.log(err);
-          res.send(err);
-        } else {
-          if (rows[0].headstone_img == null) {
-            res.header("Content-Type", "image/png");
-            var img = require('fs').readFileSync("public/images/no-image.png");
-            res.send(img);
-          } else {
-            res.header("Content-Type", "image/jpg");
-            res.send(rows[0].headstone_img);
-          }
-        }
-      });
+// GET /api/db-download
+router.get('/db-download', function(req, res) {
+  // FIXME
+  res.header("Content-Type", "text/csv");
+  // Build headers
+  // Build rows
+  // Send file
 });
 
 module.exports = router;
