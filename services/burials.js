@@ -4,7 +4,9 @@ module.exports.getBurials = function(cb) {
   var sql = 'select id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, ' + 
             'last_name, sex, birth_date, birth_place, death_date, age, death_place, ' +
             'death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng ' +
-            'from burials';
+            'from burials where id < 100'; // FIXME added WHERE for temporary debugging
+                                           //    ... to be removed in production
+                                           //      or when pagination is implemented
 
   query(sql, [], 
     function(err, rows, result) {

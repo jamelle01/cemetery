@@ -77,8 +77,8 @@ router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
 });
 
 // GET /api/img-download
-router.get('/img-download', function(req, res) {
-  svc.downloadImage(req.query.id, function(image, success) {
+router.get('/img-download/:id', function(req, res) {
+  svc.downloadImage(req.params.id, function(image, success) {
     if (success) {
       res.header("Content-Type", "image/jpg");
     } else {
@@ -90,6 +90,7 @@ router.get('/img-download', function(req, res) {
 
 // GET /api/db-download
 router.get('/db-download', function(req, res) {
+  res.send("/api/db-download not yet implemented")
   // FIXME
   res.header("Content-Type", "text/csv");
   // Build headers

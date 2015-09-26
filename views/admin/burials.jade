@@ -1,30 +1,58 @@
 doctype html
 html
   head
+    link(href="/bootstrap/dist/css/bootstrap.min.css",rel="stylesheet")
   body
-    table
-      for burial in burials
-        tr
-          td #[a(href="/admin/burial/#{burial.id}") Edit]
-          td #{burial.sd_type}
-          td #{burial.sd}
-          td #{burial.lot}
-          td #{burial.space}
-          td #{burial.lot_owner}
-          td #{burial.year_purch}
-          td #{burial.first_name}
-          td #{burial.last_name}
-          td #{burial.sex}
-          td #{burial.birth_date}
-          td #{burial.birth_place}
-          td #{burial.death_date}
-          td #{burial.age}
-          td #{burial.death_place}
-          td #{burial.death_cause}
-          td #{burial.burial_date}
-          td #{burial.notes}
-          td #{burial.more_notes}
-          td #{burial.hidden_notes}
-          td #{burial.lat}
-          td #{burial.lng}
-          td #[a(href="/admin/burial/#{burial.id}") Edit]
+    div.table-responsive
+      table.table.table-striped
+        thead
+          tr
+            th 
+            th Last name
+            th First name
+            th Section/Division
+            th SD Number 
+            th Lot
+            th Space
+            th Lot owner
+            th Year purch
+            th Sex
+            th Birth date
+            th Birth place
+            th Death date
+            th Age
+            th Death place
+            th Death cause
+            th Burial date
+            th Notes
+            th More notes
+            th Hidden notes
+            th Lat
+            th Lng
+            th 
+        tbody
+        for burial in burials
+          tr
+            td #[a(href="/admin/burial/#{burial.id}") Edit]
+            td #{burial.last_name}
+            td #{burial.first_name}
+            td #{burial.sd_type}
+            td #{burial.sd}
+            td #{burial.lot}
+            td #{burial.space}
+            td #{burial.lot_owner}
+            td #{burial.year_purch}
+            td #{burial.sex}
+            td #{burial.birth_date}
+            td #{burial.birth_place}
+            td #{burial.death_date}
+            td #{burial.age}
+            td #{burial.death_place}
+            td #{burial.death_cause}
+            td #{burial.burial_date}
+            td #{burial.notes}
+            td #{burial.more_notes}
+            td #{burial.hidden_notes}
+            td #{burial.lat}
+            td #{burial.lng}
+            td #[a(href="/admin/burial/#{burial.id}") Edit]

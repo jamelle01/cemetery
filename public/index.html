@@ -93,7 +93,7 @@ function openInfowindow(marker) {
                 + "Born: " + marker.birth_date
                 + "<br/>"
                 + "Died: " + marker.death_date
-                + "<br/><img style=\"width: 200px;\" src=\"/api/img-download?id=" + marker.id + "\" />";
+                + "<br/><img style=\"width: 200px;\" src=\"/api/img-download/" + marker.id + "\" />";
     infowindow.setContent(content);
     infowindow.open(map, marker);
 }
