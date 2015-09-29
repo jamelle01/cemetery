@@ -1,0 +1,10 @@
+doctype html
+html
+  head
+  body
+    form(action="/api/update-burial", method="POST", enctype="multipart/form-data")
+      p ID  #[input(name="id")]
+      p lat #[input(name="lat")]
+      p lng #[input(name="lng")]
+      p Image #[input(name="headstone_img",type="file",accept="image/*")]
+      p #[input(type="submit", value="Submit")]

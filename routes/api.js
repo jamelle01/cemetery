@@ -83,6 +83,17 @@ router.get('/burial-summary', function(req, res) {
   });
 });
 
+// POST /api/update-burial
+router.post('/update-burial', upload.single('headstone_img'), function(req, res) {
+  svc.updateBurial(req.file.path, req.body.id, req.body.lat, req.body.lng, function(success) {
+    if (success) {
+      res.send("ok");
+    } else {
+      res.send("error");
+    }
+  });
+});
+
 // POST /api/img-upload
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
   svc.uploadImage(req.file.path, req.body.id, function(success) {

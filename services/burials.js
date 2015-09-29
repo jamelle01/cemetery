@@ -109,6 +109,25 @@ module.exports.searchBurials = function(colNames, colValues, cb) {
 
 };
 
+module.exports.updateBurial = function(filename, burialID, lat, lng, cb) {
+  var fs = require('fs');
+  var query = require('../utils/db-utils.js').queryfn();
+
+  var img = fs.readFileSync(filename);
+
+  query("update burials set headstone_img = $1, lat = $2, lng = $3 where id = $4",
+        [img, lat, lng, burialID], 
+    function(err, rows) {
+      if (err) {
+        console.log(err);
+        cb(false);
+      } else {
+        fs.unlinkSync(filename);
+        cb(true);
+      }
+    });
+};
+
 module.exports.uploadImage = function(filename, burialID, cb) {
   var fs = require('fs');
   var query = require('../utils/db-utils.js').queryfn();

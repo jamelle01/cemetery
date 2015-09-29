@@ -18,6 +18,10 @@ router.get('/admin/burial/:id', function(req, res) {
   res.render('admin/burial', { id: req.params.id });
 });
 
+router.get('/test/update-burial', function(req, res) {
+  res.render('test/update-burial', { });
+});
+
 router.get('/test/img-upload', function(req, res) {
   res.render('test/img-upload', { });
 });
