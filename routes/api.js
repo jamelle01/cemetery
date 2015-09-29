@@ -71,7 +71,8 @@ router.get('/burial-summary', function(req, res) {
     var summaryList = new Array();
     for (var i = 0; i < burials.length; i++) {
         if (burials[i].last_name != "") {
-            var obj = { "first_name" : burials[i].first_name,
+            var obj = { "id"         : burials[i].id,
+                        "first_name" : burials[i].first_name,
                         "last_name"  : burials[i].last_name,
                         "birth_date" : burials[i].birth_date,
                         "death_date" : burials[i].death_date };
@@ -81,7 +82,6 @@ router.get('/burial-summary', function(req, res) {
     res.send( JSON.stringify(summaryList) );
   });
 });
-
 
 // POST /api/img-upload
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
