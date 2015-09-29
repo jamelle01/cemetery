@@ -65,6 +65,24 @@ router.post('/search', function(req, res) {
   doSearch(req, res, req.body);
 });
 
+// GET /api/burial-summary
+router.get('/burial-summary', function(req, res) {
+  svc.getBurials( function(burials) {
+    var summaryList = new Array();
+    for (var i = 0; i < burials.length; i++) {
+        if (burials[i].last_name != "") {
+            var obj = { "first_name" : burials[i].first_name,
+                        "last_name"  : burials[i].last_name,
+                        "birth_date" : burials[i].birth_date,
+                        "death_date" : burials[i].death_date };
+            summaryList.push(obj);
+        }
+    }  
+    res.send( JSON.stringify(summaryList) );
+  });
+});
+
+
 // POST /api/img-upload
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
   svc.uploadImage(req.file.path, req.body.id, function(success) {
