@@ -55,17 +55,22 @@ module.exports.searchBurials = function(colNames, colValues, cb) {
   var sqlWhere = ' where ';
 
   for (var ci = 0; ci < colNames.length; ci++) {
-    sqlWhere = sqlWhere + colNames[ci] + " = $" + (ci+1);
+    sqlWhere = sqlWhere + colNames[ci] + " like $" + (ci+1);
     if (ci + 1 != colNames.length) {
-      sqlWhere = ", ";
+      sqlWhere = sqlWhere + "and ";
     }
   }
 
   var sql = sqlSelect + " from burials " + sqlWhere + ";";
 
+  for (var i = 0; i < colValues.length; i++) {
+    colValues[i] = "%" + colValues[i] + "%";
+  }
+
   console.log('sql:');
   console.log(sql);
   console.log(colValues);
+
 
   var query = require('../utils/db-utils.js').queryfn();
 
@@ -76,6 +81,7 @@ module.exports.searchBurials = function(colNames, colValues, cb) {
         cb([]);
       } else {
         var burials = new Array();
+        console.log("# rows: " + rows.length);
         rows.forEach(function(row) {
           burials.push( {
             id:            row.id,
