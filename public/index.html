@@ -62,9 +62,35 @@ function initialize() {
 
 
   markers = new Array();
+}
 
-  // Bit Pit "Easter Egg"
-  placeMarker( new google.maps.LatLng(42.641333, -95.211234) );
+function bitPitEgg() {
+    var burial = {
+        id            : 0,
+        sd_type       : "",
+        sd            : "",
+        lot           : "",
+        space         : "",
+        lot_owner     : "",
+        year_purch    : "",
+        first_name    : "The Bit Pit, ",
+        last_name     : "Home of BVU Computer Science",
+        sex           : "",
+        birth_date    : "N/A",
+        birth_place   : "",
+        death_date    : "N/A",
+        age           : "",
+        death_place   : "",
+        death_cause   : "",
+        burial_date   : "",
+        notes         : "",
+        more_notes    : "",
+        hidden_notes  : "",
+        lat           : 42.641333,
+        lng           : -95.211234,
+        img           : ""
+    };
+    return burial;
 }
 
 function clearMarkers() {
@@ -75,6 +101,8 @@ function clearMarkers() {
   while (markers.length > 0) {
     markers.pop();
   }
+
+  placeMarker( bitPitEgg() );
 }
 
 function updateMarkers(res) {

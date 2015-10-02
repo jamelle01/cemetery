@@ -157,6 +157,12 @@ module.exports.uploadImage = function(filename, burialID, cb) {
 module.exports.downloadImage = function(burialID, cb) {
   var query = require('../utils/db-utils.js').queryfn();
 
+  if (burialID == 0) {
+    // Bit Pit Easter Egg!
+    var notFoundImg = require('fs').readFileSync("public/images/no-image.png");
+    cb(notFoundImg, false);
+  }
+
   query("select headstone_img from burials where id = $1", [burialID], 
     function(err, rows) {
       if (err) {
