@@ -161,6 +161,7 @@ module.exports.downloadImage = function(burialID, cb) {
     // Bit Pit Easter Egg!
     var notFoundImg = require('fs').readFileSync("public/images/no-image.png");
     cb(notFoundImg, false);
+    return;
   }
 
   query("select headstone_img from burials where id = $1", [burialID], 
@@ -170,7 +171,7 @@ module.exports.downloadImage = function(burialID, cb) {
         var notFoundImg = require('fs').readFileSync("public/images/no-image.png");
         cb(notFoundImg, false);
       } else {
-        if (rows[0].headstone_img == null) {
+        if (rows == null || rows.length == 0 || rows[0].headstone_img == null) {
           var notFoundImg = require('fs').readFileSync("public/images/no-image.png");
           cb(notFoundImg, false);
         } else {

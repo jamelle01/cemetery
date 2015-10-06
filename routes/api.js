@@ -13,8 +13,8 @@ var svc = require('../services/burials.js');
  * Separates parameter names and values into separate Arrays so
  * that they can be given to the burials service.
  *
- * @param params the HTTP parameters
- * @return an Array of two items: the column names followed by the column values
+ * @param {Object} params the HTTP parameters
+ * @return {Array} Two items: the column names followed by the column values
  */
 function getColumns(params) {
   var colNames = new Array();
@@ -25,6 +25,7 @@ function getColumns(params) {
       colValues.push(params[name]);
     }
   }
+
   return [colNames, colValues];
 }
 
@@ -34,9 +35,10 @@ function getColumns(params) {
  * we will simply send an empty list (though, we would hope clients should prevent
  * such meaningless requests).
  *
- * @param req the HTTP request
- * @param res the HTTP response used to send a JSON Array back to the client
- * @param params An abstraction that either refers to HTTP GET query or POST body params
+ * @param {IncomingMessage} req the HTTP request
+ * @param {ServerResponse} res the HTTP response used to send a JSON Array back to the client
+ * @param {Object} params An abstraction that either refers to HTTP GET query
+ *          or POST body params
  */
 function doSearch(req, res, params) {
   var ret = getColumns(params);
@@ -117,14 +119,24 @@ router.get('/img-download/:id', function(req, res) {
   });
 });
 
-// GET /api/db-download
-router.get('/db-download', function(req, res) {
-  res.send("/api/db-download not yet implemented")
+// GET /api/db-backup
+router.get('/db-backup', function(req, res) {
+  res.send("/api/db-backup not yet implemented")
   // FIXME
   res.header("Content-Type", "text/csv");
   // Build headers
   // Build rows
   // Send file
+});
+
+// POST /api/db-restore
+router.post('/db-restore', function(req, res) {
+  res.send("/api/db-restore not yet implemented")
+  // FIXME
+  // Receive CSV file
+  // Read header to construct order of SQL
+  // Drop existing table (maybe rename to save any old data?)
+  // For each row, insert
 });
 
 module.exports = router;
