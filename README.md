@@ -20,7 +20,7 @@ bower install
 npm install -g db-migrate
 ```
 
-Next, create a PostgreSQL database named sl-cem.
+Next, create a PostgreSQL database named slcem.
 
 Modify database.json with the credentials for your PostgreSQL
 
