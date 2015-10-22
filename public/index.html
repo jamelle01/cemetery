@@ -37,6 +37,11 @@
 .dropdown-menu {
   padding: 8px;
 }
+#error-message {
+  min-height: 1em;
+  color: red;
+  font-weight: bold;
+}
 </style>
 <script src="https://maps.googleapis.com/maps/api/js"></script>
 <script>
@@ -105,8 +110,7 @@ function clearMarkers() {
   placeMarker( bitPitEgg() );
 }
 
-function updateMarkers(res) {
-    var ary = eval(res);
+function updateMarkers(ary) {
     for (var i = 0; i < ary.length; i++) {
         placeMarker(ary[i]);
     }
@@ -193,6 +197,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
             <p>Place of Death: <input id="death_place" type="text"></p>
             <p>Year of Death: <input id="death_date" type="text"></p>
             <p>Owner of Lot: <input id="lot_owner" type="text"></p>
+            <p id="error-message"></p>
             <input id="do-search-btn" type="button" value="Find" />
           </form>
         </div>
@@ -213,21 +218,15 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <script type="text/javascript">
 
 function handleSearchResponse(res) {
-    // Remove 'searching' feedback and hide dropdown-menu
-    // If error, show message (example: "No one matching criteria found")
-    // Else, clearMarkers, then iterate through results and placeMarker each
-    //          Also, if only one result, open infowindow...
+    res = eval(res);
+    clearMarkers();
     if (res.length == 0) {
-        console.log("We ain't found squat!");
+        $('#error-message').html('No results found.');
     } else {
-        console.log('clearing markers');
-        clearMarkers();
-        console.log('updating markers');
         updateMarkers(res);
+        $('#search-btn').dropdown('toggle');
+        $('#error-message').html('');
     }
-    console.log('toggling dropdown');
-    $('#search-btn').dropdown('toggle');
-    console.log('done');
 }
 
 $(document).ready(function() {
