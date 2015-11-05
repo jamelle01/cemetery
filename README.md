@@ -13,6 +13,8 @@ Then,
 ```
 git clone https://github.com/jbshep/sl-cem.git
 
+cd sl-cem
+
 npm install
 
 bower install
