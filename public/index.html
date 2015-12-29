@@ -6,6 +6,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 <style type="text/css">
+body {
+    background-image: url('images/sl-cem-header.png');
+    background-size: 2500px 200px;
+}
+#logo {
+    height: 100px;
+    padding-bottom: 20px;
+}
+.hdr-bar {
+    background-color: rgb(175, 186, 126);
+}
+.ftr-bar {
+    background-color: rgb(73, 80, 40);
+}
+.bld-text {
+    color: rgb(97, 58, 40);
+}
 #hdr-row {
   margin-top: 8px;
   margin-bottom: 8px;
@@ -33,6 +50,7 @@
   padding: 6px;
   padding-top: 4px;
   background-color: lightGrey;
+  background-color: rgb(175, 186, 126);
 }
 .dropdown-menu {
   padding: 8px;
@@ -174,9 +192,11 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <div class="container">
   <div id="hdr-row" class="row">
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+<!--
       <span class="hdr-text-1">storm</span><span class="hdr-text-2">lake</span> &nbsp;<span class="hdr-text">cemetery</span>
+-->
+    <img id="logo" src="images/sl-cem-logo.png">
     </div>
-
 
     <div class="btn-toolbar col-xs-12 col-sm-12 col-md-12 col-lg-12">
 
