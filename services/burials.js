@@ -1,9 +1,12 @@
 module.exports.getBurials = function(cb) {
   var query = require('../utils/db-utils.js').queryfn();
 
+  console.log("DEBUGGING CODE DETECTED... temporary WHERE inserted to return < 100 rows");
+  console.log("REMOVE FOR PRODUCTION");
   var sql = 'select id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, ' + 
             'last_name, sex, birth_date, birth_place, death_date, age, death_place, ' +
-            'death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng ' +
+            'death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng, ' +
+            'headstone_img ' +
             'from burials where id < 100'; // FIXME added WHERE for temporary debugging
                                            //    ... to be removed in production
                                            //      or when pagination is implemented

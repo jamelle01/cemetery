@@ -11,10 +11,11 @@ var svc = require('../services/burials.js');
 
 /**
  * Separates parameter names and values into separate Arrays so
- * that they can be given to the burials service.
+ * that they can be passed to the burials service.
  *
  * @param {Object} params the HTTP parameters
- * @return {Array} Two items: the column names followed by the column values
+ * @return {Array} [0]: column names,
+ *                 [1]: column values
  */
 function getColumns(params) {
   var colNames = new Array();
@@ -68,6 +69,7 @@ router.post('/search', function(req, res) {
 });
 
 // GET /api/burial-summary
+// Used by camera app to retrieve ALL burials.
 router.get('/burial-summary', function(req, res) {
   svc.getBurials( function(burials) {
     var summaryList = new Array();
@@ -86,6 +88,7 @@ router.get('/burial-summary', function(req, res) {
 });
 
 // POST /api/update-burial
+// Used by camera app to update the lat, lng, and headstone_image of a single burial.
 router.post('/update-burial', upload.single('headstone_img'), function(req, res) {
   svc.updateBurial(req.file.path, req.body.id, req.body.lat, req.body.lng, function(success) {
     if (success) {
@@ -120,13 +123,43 @@ router.get('/img-download/:id', function(req, res) {
 });
 
 // GET /api/db-backup
+// FIXME ... where are headstone images?
 router.get('/db-backup', function(req, res) {
-  res.send("/api/db-backup not yet implemented")
-  // FIXME
-  res.header("Content-Type", "text/csv");
-  // Build headers
-  // Build rows
-  // Send file
+  svc.getBurials( function(burials) {
+    if (burials.length < 1) {
+      console.log("no burials available for backup");
+      res.send("error");
+    } else {
+      var text = "";
+
+      // Build header.
+      var colNames = Object.keys(burials[0]);
+      text += colNames.join() + "\n";
+      
+      // Build rows.
+      for (var k = 0; k < burials.length; k++) {
+        var colValues = [];
+        for (var j = 0; j < colNames.length; j++) {
+          var colName = colNames[j];
+          var colValue = burials[k][colName];
+          // Need to account for commas in colValue and quote it.
+          console.log(colValue);
+          if (colValue.constructor == String && colValue.indexOf(",") >= 0) {
+            console.log("Comma!");
+            colValues.push("\"" + burials[k][colName] + "\"");
+          } else {
+            console.log("no comma...");
+            colValues.push(burials[k][colName]);
+          }
+        }
+        text += colValues.join() + "\n";
+      }
+
+      // Send data.
+      res.header("Content-Type", "text/csv");
+      res.send(text);
+    }
+  });
 });
 
 // POST /api/db-restore
