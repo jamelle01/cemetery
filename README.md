@@ -50,3 +50,6 @@ or, if you have nodemon installed, type
 nodemon bin/www
 ```
 
+## Contributing to this application
+
+BVU students who wish to contribute code to this project should make every effort to follow the [Airbnb JavaScript Style Guide for ES5](https://github.com/airbnb/javascript/tree/master/es5).  Once Node.js more reliably supports ES6, we may choose to migrate to the newest style guide.
