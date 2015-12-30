@@ -1,6 +1,6 @@
-# sl-cem
+# Storm Lake Cemetery (sl-cem)
 
-Interactive map application for Storm Lake cemetery.
+An interactive map application for the Storm Lake cemetery.
 
 ## Quick setup
 
