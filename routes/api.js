@@ -5,9 +5,6 @@ var upload = multer({ dest: 'uploads/' });
 
 var svc = require('../services/burials.js');
 
-/*-------------------------------------------------------------------
- Helper methods
--------------------------------------------------------------------*/
 
 /**
  * Separates parameter names and values into separate Arrays so
@@ -29,6 +26,7 @@ function getColumns(params) {
 
   return [colNames, colValues];
 }
+
 
 /**
  * Retrieves all burials as JSON for records whose DB column name/values match
@@ -55,18 +53,25 @@ function doSearch(req, res, params) {
 }
 
 /*-------------------------------------------------------------------
+---------------------------------------------------------------------
+
  Routes - all URI's are prefixed with /api
+
+---------------------------------------------------------------------
 -------------------------------------------------------------------*/
+
 
 // GET /api/search
 router.get('/search', function(req, res) {
   doSearch(req, res, req.query);
 });
 
+
 // POST /api/search
 router.post('/search', function(req, res) {
   doSearch(req, res, req.body);
 });
+
 
 // GET /api/burial-summary
 // Used by camera app to retrieve ALL burials.
@@ -87,6 +92,7 @@ router.get('/burial-summary', function(req, res) {
   });
 });
 
+
 // POST /api/update-burial
 // Used by camera app to update the lat, lng, and headstone_image of a single burial.
 router.post('/update-burial', upload.single('headstone_img'), function(req, res) {
@@ -99,6 +105,7 @@ router.post('/update-burial', upload.single('headstone_img'), function(req, res)
   });
 });
 
+
 // POST /api/img-upload
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
   svc.uploadImage(req.file.path, req.body.id, function(success) {
@@ -110,31 +117,38 @@ router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
   });
 });
 
+
 // GET /api/img-download
 router.get('/img-download/:id', function(req, res) {
   svc.downloadImage(req.params.id, function(image, success) {
     if (success) {
+      // All headstone photos are JPEGs.
       res.header("Content-Type", "image/jpg");
     } else {
+      // All "not found" images are PNGs.
       res.header("Content-Type", "image/png");
     }
     res.send(image);
   });
 });
 
-// GET /api/db-backup
-// FIXME ... where are headstone images?
-router.get('/db-backup', function(req, res) {
+
+// GET /api/db-download
+// TODO: use svc.extractCSV() and extractImages() to generate files,
+//    then make ZIP containing the CSV and JPEGS
+//    use archiver:
+//    http://stackoverflow.com/questions/15641243/need-to-zip-an-entire-directory-using-node-js
+router.get('/db-download', function(req, res) {
   svc.getBurials( function(burials) {
     if (burials.length < 1) {
-      console.log("no burials available for backup");
+      console.log("no burials available for download");
       res.send("error");
     } else {
-      var text = "";
+      var csvText = "";
 
       // Build header.
       var colNames = Object.keys(burials[0]);
-      text += colNames.join() + "\n";
+      csvText += colNames.join() + "\n";
       
       // Build rows.
       for (var k = 0; k < burials.length; k++) {
@@ -142,14 +156,15 @@ router.get('/db-backup', function(req, res) {
         for (var j = 0; j < colNames.length; j++) {
           var colName = colNames[j];
           var colValue = burials[k][colName];
-          // Need to account for commas in colValue and quote it.
-          console.log(colValue);
-          if (colValue.constructor == String && colValue.indexOf(",") >= 0) {
-            console.log("Comma!");
-            colValues.push("\"" + burials[k][colName] + "\"");
+
+          if (colValue == null) {
+            colValues.push(null);
+          } else if (colValue.constructor == String) {
+            colValues.push("\"" + colValue + "\"");
+          } else if (colValue.constructor == Buffer) {
+            colValues.push("\"" + colValue.toString("utf-8") + "\"");
           } else {
-            console.log("no comma...");
-            colValues.push(burials[k][colName]);
+            colValues.push(colValue);
           }
         }
         text += colValues.join() + "\n";
@@ -162,14 +177,38 @@ router.get('/db-backup', function(req, res) {
   });
 });
 
-// POST /api/db-restore
-router.post('/db-restore', function(req, res) {
-  res.send("/api/db-restore not yet implemented")
+
+// POST /api/db-upload
+router.post('/db-upload', function(req, res) {
+  res.send("/api/db-upload not yet implemented")
   // FIXME
   // Receive CSV file
   // Read header to construct order of SQL
   // Drop existing table (maybe rename to save any old data?)
   // For each row, insert
+});
+
+
+// TODO: remove this... exists for testing purposes only
+router.get('/extract-images', function(req, res) {
+  svc.extractImages( function(success) {
+    if (success) {
+      res.send("ok");
+    } else {
+      res.send("error");
+    }
+  });
+});
+
+// TODO: remove this... exists for testing purposes only
+router.get('/extract-csv', function(req, res) {
+  svc.extractCSV( function(success) {
+    if (success) {
+      res.send("ok");
+    } else {
+      res.send("error");
+    }
+  });
 });
 
 module.exports = router;

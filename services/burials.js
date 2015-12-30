@@ -1,15 +1,16 @@
-module.exports.getBurials = function(cb) {
+/**
+ * Retrieves all burial objects and passes them to the given callback function.
+ *
+ * @param {Function} cb is a Function(Array) where the Array contains each burial object.
+ */
+module.exports.getBurials = function getBurials(cb) {
   var query = require('../utils/db-utils.js').queryfn();
 
-  console.log("DEBUGGING CODE DETECTED... temporary WHERE inserted to return < 100 rows");
-  console.log("REMOVE FOR PRODUCTION");
   var sql = 'select id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, ' + 
             'last_name, sex, birth_date, birth_place, death_date, age, death_place, ' +
             'death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng, ' +
             'headstone_img ' +
-            'from burials where id < 100'; // FIXME added WHERE for temporary debugging
-                                           //    ... to be removed in production
-                                           //      or when pagination is implemented
+            'from burials ';
 
   query(sql, [], 
     function(err, rows, result) {
@@ -41,7 +42,8 @@ module.exports.getBurials = function(cb) {
             more_notes:    row.more_notes,
             hidden_notes:  row.hidden_notes,
             lat:           row.lat,
-            lng:           row.lng           
+            lng:           row.lng,
+            headstone_img: row.headstone_img
           } );
         });
 
@@ -50,7 +52,15 @@ module.exports.getBurials = function(cb) {
     });
 };
 
-module.exports.searchBurials = function(colNames, colValues, cb) {
+
+/**
+ * Retrieves all burial objects and passes them to the given callback function.
+ *
+ * @param {Array} colNames contains the names of the columns to search.
+ * @param {Array} colValues contains the values to match in the corresponding column names.
+ * @param {Function} cb is a Function(Array) where the Array contains each burial object.
+ */
+module.exports.searchBurials = function searchBurials(colNames, colValues, cb) {
   var sqlSelect = 'select id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, ' + 
                   'last_name, sex, birth_date, birth_place, death_date, age, death_place, ' +
                   'death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng ';
@@ -118,7 +128,20 @@ module.exports.searchBurials = function(colNames, colValues, cb) {
 
 };
 
-module.exports.updateBurial = function(filename, burialID, lat, lng, cb) {
+
+/**
+ * Updates a burial with latitude, longitude, and a headstone image.
+ * This function is responsible for deleting/unlinking the headstone image file
+ * upon a successful update.
+ *
+ * @param {String} filename is the file containing the headstone image.
+ * @param {Number} burialID is the database ID of the burial
+ * @param {Number} lat is the latitude
+ * @param {Number} lng is the longitude
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the update was successful
+ */
+module.exports.updateBurial = function updateBurial(filename, burialID, lat, lng, cb) {
   var fs = require('fs');
   var query = require('../utils/db-utils.js').queryfn();
 
@@ -137,7 +160,18 @@ module.exports.updateBurial = function(filename, burialID, lat, lng, cb) {
     });
 };
 
-module.exports.uploadImage = function(filename, burialID, cb) {
+
+/**
+ * Updates a burial with a headstone image.
+ * This function is responsible for deleting/unlinking the headstone image file
+ * upon a successful update.
+ *
+ * @param {String} filename is the file containing the headstone image.
+ * @param {Number} burialID is the database ID of the burial
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the update was successful
+ */
+module.exports.uploadImage = function uploadImage(filename, burialID, cb) {
   var fs = require('fs');
   var query = require('../utils/db-utils.js').queryfn();
 
@@ -157,7 +191,17 @@ module.exports.uploadImage = function(filename, burialID, cb) {
   // update lat/lng in burials?
 };
 
-module.exports.downloadImage = function(burialID, cb) {
+
+/**
+ * Retrieves the headstone image for the given burial ID.
+ *
+ * @param {Number} burialID is the database ID of the burial.
+ * @param {Function} cb is a Function(Buffer, Boolean) where the Buffer contains the
+ *                      binary data of the image and the Boolean indicates whether
+ *                      an image was found; if there was no image, a "not found"
+ *                      image is provided in the Buffer.
+ */
+module.exports.downloadImage = function downloadImage(burialID, cb) {
   var query = require('../utils/db-utils.js').queryfn();
 
   if (burialID == 0) {
@@ -183,3 +227,87 @@ module.exports.downloadImage = function(burialID, cb) {
       }
     });
 };
+
+
+/**
+ * Extracts data from the burials table and exports it to a CSV file, which is stored in
+ * 'uploads/sl-cem-data.csv'.  Headstone images are omitted from this export.
+ * Those should be extracted separately using extractImages().
+ *
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the operation was successful.
+ */
+module.exports.extractCSV = function extractCSV(cb) {
+  this.getBurials( function(burials) {
+    if (burials.length < 1) {
+      console.log('no burials available for download');
+      cb(false);
+    } else {
+      var csvText = '';
+
+      /**
+       * Build header using the column names.
+       * Omit headstone images.
+       * Those should be extracted separately using extractImages().
+       */
+      var colNames = Object.keys(burials[0]);
+      colNames.pop('headstone_img');
+      csvText += colNames.join() + '\n';
+      
+      /**
+       * Build rows.
+       * Since headstone images were excluded in the previous step,
+       * they will by extension be excluded here, too.
+       */
+      for (var k = 0; k < burials.length; k++) {
+        var colValues = [];
+        for (var j = 0; j < colNames.length; j++) {
+          var colName = colNames[j];
+          var colValue = burials[k][colName];
+
+          if (colValue == null) {
+            colValues.push(null);
+          } else if (colValue.constructor == String) {
+            colValues.push('"' + colValue + '"');
+          } else {
+            colValues.push(colValue);
+          }
+        }
+        csvText += colValues.join() + '\n';
+      }
+    
+      /**
+       * Finally, write CSV data to a file.
+       */
+      require('fs').writeFileSync('uploads/sl-cem-data.csv', csvText);
+      cb(true);
+    }
+  });
+};
+
+
+/**
+ * Extracts headstone images from the burials table and exports each image to a JPEG file
+ * of the form 'uploads/<ID>.jpg' where <ID> is the burial ID.
+ *
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the operation was successful.
+ */
+module.exports.extractImages = function extractImages(cb) {
+  var query = require('../utils/db-utils.js').queryfn();
+  query("select id, headstone_img from burials where headstone_img is not null", [], 
+    function(err, rows) {
+      rows.forEach( function(row) {
+        require('fs').writeFileSync('uploads/' + row.id + '.jpg', row.headstone_img);
+      });
+      cb(true);
+    });
+};
+
+// TODO:
+// backup and restore methods for burials_backup table
+//  backup -->  delete from burials_backup;
+//              insert into burials_backup select * from burials;
+//  restore --> delete from burials;
+//              insert into burials select * from burials_backup;
+
