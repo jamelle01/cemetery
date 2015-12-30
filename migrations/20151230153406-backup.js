@@ -2,7 +2,7 @@ var dbm = require('db-migrate');
 var type = dbm.dataType;
 
 exports.up = function(db, callback) {
-	db.createTable('burials', {
+	db.createTable('burials_backup', {
 		id: { type: 'int', primaryKey: true, autoIncrement: true },
         sd_type: 'string',
         sd: 'string',
@@ -24,10 +24,11 @@ exports.up = function(db, callback) {
         more_notes: 'string',
         hidden_notes: 'string',
         lat: 'real',
-        lng: 'real'
+        lng: 'real',
+        headstone_img: { type: 'blob' }
 	}, callback);
 };
 
 exports.down = function(db, callback) {
-    db.dropTable('burials', callback);
+    db.dropTable('burials_backup', callback);
 };
