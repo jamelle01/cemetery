@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var multer  = require('multer');
 var upload = multer({ dest: 'uploads/' });
+var fs = require('fs');
+var archiver = require('archiver');
 
 var svc = require('../services/burials.js');
 
@@ -134,47 +136,38 @@ router.get('/img-download/:id', function(req, res) {
 
 
 // GET /api/db-download
-// TODO: use svc.extractCSV() and extractImages() to generate files,
-//    then make ZIP containing the CSV and JPEGS
-//    use archiver:
-//    http://stackoverflow.com/questions/15641243/need-to-zip-an-entire-directory-using-node-js
 router.get('/db-download', function(req, res) {
-  svc.getBurials( function(burials) {
-    if (burials.length < 1) {
-      console.log("no burials available for download");
-      res.send("error");
-    } else {
-      var csvText = "";
+  var udir = 'uploads';
+  var sdir = 'uploads/sl-cem-data';
+  var zipPath = udir + '/sl-cem-data.zip';
 
-      // Build header.
-      var colNames = Object.keys(burials[0]);
-      csvText += colNames.join() + "\n";
-      
-      // Build rows.
-      for (var k = 0; k < burials.length; k++) {
-        var colValues = [];
-        for (var j = 0; j < colNames.length; j++) {
-          var colName = colNames[j];
-          var colValue = burials[k][colName];
+  // TODO: Make sure there is no leftover uploads/sl-cem-data/*
 
-          if (colValue == null) {
-            colValues.push(null);
-          } else if (colValue.constructor == String) {
-            colValues.push("\"" + colValue + "\"");
-          } else if (colValue.constructor == Buffer) {
-            colValues.push("\"" + colValue.toString("utf-8") + "\"");
-          } else {
-            colValues.push(colValue);
-          }
-        }
-        text += colValues.join() + "\n";
-      }
+  fs.mkdirSync(sdir);
 
-      // Send data.
-      res.header("Content-Type", "text/csv");
-      res.send(text);
+  svc.extractImages(sdir, function(success) {
+    if (success) {
+      svc.extractCSV(sdir, function(success) {
+        var output = fs.createWriteStream(zipPath);
+        var archive = archiver('zip');
+
+        archive.pipe(output);
+
+        output.on('close', function() {
+          console.log("Sending...");
+          res.header("Content-Type", "application.zip");
+          res.send( fs.readFileSync(zipPath) );
+          //fs.rmdirSync(sdir);  TODO: do recursive remove
+        });
+
+        archive
+          .directory(sdir, '/', {})
+          .finalize();
+
+      });
     }
   });
+
 });
 
 
@@ -190,8 +183,9 @@ router.post('/db-upload', function(req, res) {
 
 
 // TODO: remove this... exists for testing purposes only
+//        we don't want API users leaving files on the server
 router.get('/extract-images', function(req, res) {
-  svc.extractImages( function(success) {
+  svc.extractImages('uploads', function(success) {
     if (success) {
       res.send("ok");
     } else {
@@ -201,8 +195,9 @@ router.get('/extract-images', function(req, res) {
 });
 
 // TODO: remove this... exists for testing purposes only
+//        we don't want API users leaving files on the server
 router.get('/extract-csv', function(req, res) {
-  svc.extractCSV( function(success) {
+  svc.extractCSV('uploads', function(success) {
     if (success) {
       res.send("ok");
     } else {

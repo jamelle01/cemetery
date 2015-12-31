@@ -234,10 +234,11 @@ module.exports.downloadImage = function downloadImage(burialID, cb) {
  * 'uploads/sl-cem-data.csv'.  Headstone images are omitted from this export.
  * Those should be extracted separately using extractImages().
  *
+ * @param {String} dir is the directory into which the CSV should be extracted.
  * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
  *                      the operation was successful.
  */
-module.exports.extractCSV = function extractCSV(cb) {
+module.exports.extractCSV = function extractCSV(dir, cb) {
   this.getBurials( function(burials) {
     if (burials.length < 1) {
       console.log('no burials available for download');
@@ -279,7 +280,7 @@ module.exports.extractCSV = function extractCSV(cb) {
       /**
        * Finally, write CSV data to a file.
        */
-      require('fs').writeFileSync('uploads/sl-cem-data.csv', csvText);
+      require('fs').writeFileSync(dir + '/sl-cem-data.csv', csvText);
       cb(true);
     }
   });
@@ -288,17 +289,18 @@ module.exports.extractCSV = function extractCSV(cb) {
 
 /**
  * Extracts headstone images from the burials table and exports each image to a JPEG file
- * of the form 'uploads/<ID>.jpg' where <ID> is the burial ID.
+ * of the form '<ID>.jpg' where <ID> is the burial ID.
  *
+ * @param {String} dir is the directory into which the images should be extracted.
  * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
  *                      the operation was successful.
  */
-module.exports.extractImages = function extractImages(cb) {
+module.exports.extractImages = function extractImages(dir, cb) {
   var query = require('../utils/db-utils.js').queryfn();
   query("select id, headstone_img from burials where headstone_img is not null", [], 
     function(err, rows) {
       rows.forEach( function(row) {
-        require('fs').writeFileSync('uploads/' + row.id + '.jpg', row.headstone_img);
+        require('fs').writeFileSync(dir + '/' + row.id + '.jpg', row.headstone_img);
       });
       cb(true);
     });
