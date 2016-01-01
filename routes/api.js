@@ -138,8 +138,8 @@ router.get('/img-download/:id', function(req, res) {
 
 // GET /api/db-download
 router.get('/db-download', function(req, res) {
-  var udir = 'uploads';
-  var sdir = 'uploads/sl-cem-data';
+  var ddir = 'downloads';
+  var sdir = ddir + '/sl-cem-data';
 
   var dateStr = (new Date())
                   .toISOString()
@@ -150,7 +150,16 @@ router.get('/db-download', function(req, res) {
                   .substr(0,15);
 
   var zipFilename = 'sl-cem-data-' + dateStr + '.zip';
-  var zipPath = udir + '/' + zipFilename;
+  var zipPath = ddir + '/' + zipFilename;
+
+  // Verify that there is a downloads directory.
+  try {
+    // If this triggers an exception, then we do need to create ddir.
+    var st = fs.statSync(ddir);
+  } catch (e) {
+    console.log('creating ' + ddir);
+    fs.mkdirSync(ddir);
+  }
 
   // Verify that there is no leftover sdir directory.
   try {
@@ -197,38 +206,31 @@ router.get('/db-download', function(req, res) {
 
 
 // POST /api/db-upload
-router.post('/db-upload', function(req, res) {
+router.post('/db-upload', upload.single('zipfile'), function(req, res) {
   res.send("/api/db-upload not yet implemented")
-  // FIXME
-  // Receive CSV file
-  // Read header to construct order of SQL
-  // Drop existing table (maybe rename to save any old data?)
-  // For each row, insert
+  // We have req.file.path and any req.body.* params
 });
 
 
-// TODO: remove this... exists for testing purposes only
-//        we don't want API users leaving files on the server
-router.get('/extract-images', function(req, res) {
-  svc.extractImages('uploads', function(success) {
-    if (success) {
-      res.send("ok");
-    } else {
-      res.send("error");
-    }
-  });
-});
+//router.get('/extract-images', function(req, res) {
+//  svc.extractImages('uploads', function(success) {
+//    if (success) {
+//      res.send("ok");
+//    } else {
+//      res.send("error");
+//    }
+//  });
+//});
 
-// TODO: remove this... exists for testing purposes only
-//        we don't want API users leaving files on the server
-router.get('/extract-csv', function(req, res) {
-  svc.extractCSV('uploads', function(success) {
-    if (success) {
-      res.send("ok");
-    } else {
-      res.send("error");
-    }
-  });
-});
+
+//router.get('/extract-csv', function(req, res) {
+//  svc.extractCSV('uploads', function(success) {
+//    if (success) {
+//      res.send("ok");
+//    } else {
+//      res.send("error");
+//    }
+//  });
+//});
 
 module.exports = router;
