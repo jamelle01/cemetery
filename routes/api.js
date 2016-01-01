@@ -4,6 +4,7 @@ var multer  = require('multer');
 var upload = multer({ dest: 'uploads/' });
 var fs = require('fs');
 var archiver = require('archiver');
+var rmdir = require('rimraf');
 
 var svc = require('../services/burials.js');
 
@@ -139,12 +140,33 @@ router.get('/img-download/:id', function(req, res) {
 router.get('/db-download', function(req, res) {
   var udir = 'uploads';
   var sdir = 'uploads/sl-cem-data';
-  var zipPath = udir + '/sl-cem-data.zip';
 
-  // TODO: Make sure there is no leftover uploads/sl-cem-data/*
+  var dateStr = (new Date())
+                  .toISOString()
+                  .replace('-','')
+                  .replace('-','')
+                  .replace(':','')
+                  .replace(':','')
+                  .substr(0,15);
 
+  var zipFilename = 'sl-cem-data-' + dateStr + '.zip';
+  var zipPath = udir + '/' + zipFilename;
+
+  // Verify that there is no leftover sdir directory.
+  try {
+    // If this triggers an exception, then we do not need to remove sdir.
+    var st = fs.statSync(sdir);
+
+    rmdir(sdir, function(err) {});
+
+  } catch (e) {
+    // sdir does not exist.  We do not need to delete it.  Do nothing.
+  }
+
+  // Create an empty sdir directory.
   fs.mkdirSync(sdir);
 
+  // Extract images, burials table (as a CSV file), ZIP up the contents, and send it to the browser.
   svc.extractImages(sdir, function(success) {
     if (success) {
       svc.extractCSV(sdir, function(success) {
@@ -154,10 +176,13 @@ router.get('/db-download', function(req, res) {
         archive.pipe(output);
 
         output.on('close', function() {
-          console.log("Sending...");
-          res.header("Content-Type", "application.zip");
+          // Send ZIP.
+          res.header('Content-Type', 'application/zip');
+          res.header('Content-Disposition', 'attachment; filename=' + zipFilename);
           res.send( fs.readFileSync(zipPath) );
-          //fs.rmdirSync(sdir);  TODO: do recursive remove
+
+          // Clean up staging directory.
+          rmdir(sdir, function(err) {});
         });
 
         archive
