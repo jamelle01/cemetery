@@ -70,13 +70,14 @@ var infowindow;
 var markers;
 var defaultCenter;
 function initialize() {
-
-  defaultCenter = new google.maps.LatLng(42.634739, -95.174137);
+  //defaultCenter = new google.maps.LatLng(42.634739, -95.174137);
+  defaultCenter = new google.maps.LatLng(42.634739, -95.173137);
 
   // Map props can be hardcoded.  The cemetery is unlikely to get up and move away.
   var mapProp = {
     center: defaultCenter,
-    zoom:18,
+    //zoom:18,
+    zoom:17,
     mapTypeId:google.maps.MapTypeId.SATELLITE
   };
 
@@ -129,13 +130,18 @@ function clearMarkers() {
 }
 
 function updateMarkers(ary) {
-    for (var i = 0; i < ary.length; i++) {
-        placeMarker(ary[i]);
+  for (var i = 0; i < ary.length; i++) {
+    placeMarker(ary[i]);
+  }
+  if (ary.length == 1) {
+    // Single result: go ahead and open its infowindow.
+    // Keep in mind there is more than one marker on-screen.
+    if (markers[0].id != 0) {
+      openInfowindow(markers[0]);
+    } else {
+      openInfowindow(markers[1]);
     }
-    if (ary.length == 1) {
-        // Single marker: go ahead and open its infowindow.
-        openInfowindow(markers[0]);
-    }
+  }
 }
 
 function openInfowindow(marker) {
@@ -228,7 +234,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
   </div>
 
   <div class="row">
-    <div id="googleMap" style="height:530px;"></div>
+    <div id="googleMap" style="height:450px;"></div>
   </div>
 
 </div>
