@@ -288,12 +288,13 @@ module.exports.restoreBurialsFromFiles = function restoreBurialsFromFiles(spath,
           cols[19],
           DEF_LAT,
           DEF_LNG
-        ], 
-        function(err, result) {
+        ], function(err, result) {
           if (err) {
             console.log(err);
           }
       });
+    });
+  });
 
   // For each image, update the headstone image in burials.
   //this.uploadImage(filename, burialIDFromFilename, cb);
