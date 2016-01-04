@@ -114,6 +114,7 @@ router.post('/update-burial', upload.single('headstone_img'), function(req, res)
 router.post('/img-upload', upload.single('headstone_img'), function(req, res) {
   svc.uploadImage(req.file.path, req.body.id, function(success) {
     if (success) {
+      fs.unlinkSync(req.file.path);
       res.send("ok");
     } else {
       res.send("error");
@@ -221,6 +222,7 @@ router.post('/db-upload', upload.single('zipfile'), function(req, res) {
                   .substr(0,15);
 
   var spath = 'uploads/sl-cem-data-' + dateStr;
+  console.log('decompressing ' + req.file.path + ' into ' + spath);
 
   try {
     new decompress({mode: '755'})
@@ -231,8 +233,13 @@ router.post('/db-upload', upload.single('zipfile'), function(req, res) {
         svc.backupBurialsToTable(function(success) {
           svc.restoreBurialsFromFiles(spath, function() {
             // Clean up and respond.
+	    /* TODO: fix restoreBurialFromFiles() so it doesn't call cleanupCB
+	         until all restore work is done. 
+            console.log('unlinking ' + req.file.path);
             fs.unlinkSync(req.file.path);
+            console.log('rmdir on ' + spath);
             rmdir(spath, function(err) {});
+	    */
             res.send('ok')
           });
         });

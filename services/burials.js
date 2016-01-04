@@ -1,3 +1,6 @@
+var fs = require('fs');
+var query = require('../utils/db-utils.js').queryfn();
+
 /**
  * String.endsWith() implemementation
  */
@@ -249,69 +252,97 @@ module.exports.restoreBurialsFromTable = function restoreBurialsFromTable(cb) {
  *                      the operation was successful
  */
 module.exports.restoreBurialsFromFiles = function restoreBurialsFromFiles(spath, cleanupCB) {
-  // Parse CSV and update burials table.
-  var csvFilepath = spath + 'sl-cem-data.csv';
-  var DEF_LAT = 0;
-  var DEF_LNG = 0;
-
-  fs.readFile(csvFilepath, function(err, buf) {
-    lines = buf.toString().split('\n');
-    var firstLine = true;
-
-    lines.forEach(function(line) {
-      if (firstLine) {
-        firstLine = false;
-        return;
-      }
-
-      cols = splitCols(line);
-
-      query('insert into burials (sd_type, sd, lot, space, lot_owner, year_purch, first_name, last_name, sex, birth_date, birth_place, death_date, age, death_place, death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21);',
-        [ cols[1],
-          cols[2],
-          cols[3],
-          cols[4],
-          cols[5],
-          cols[6],
-          cols[7],
-          cols[8],
-          cols[9],
-          cols[10],
-          cols[11],
-          cols[12],
-          cols[13],
-          cols[14],
-          cols[15],
-          cols[16],
-          cols[17],
-          cols[18],
-          cols[19],
-          DEF_LAT,
-          DEF_LNG
-        ], function(err, result) {
-          if (err) {
-            console.log(err);
-          }
-      });
-    });
-  });
+  var events = require('events');
+  var eventEmitter = new events.EventEmitter();
+  var _this = require('../services/burials.js');
 
   // For each image, update the headstone image in burials.
-  //this.uploadImage(filename, burialIDFromFilename, cb);
-  var dirEntries = fs.readdirSync(spath);
-  for (var k = 0; k < dirEntries.length; k++) {
-    var filename = dirEntries[k];
-    if (filename.endsWith('.jpg')) {
-      var burialIDStr = filename.substr(0, filename.lastIndexOf('.jpg'));
-      var burialID = parseInt(burialIDStr);
-      this.uploadImage(filename, burialID, function() {});
-    }
-  }
+  var updateImagesFromFiles = function updateImagesFromFiles() {
+    var dirEntries = fs.readdirSync(spath);
 
-  // Pass control to the cleanup callback function (probably defined by the caller).
-  // The cleanup callback function will most likely remove the spath dir and all its contents,
-  // and then send an "ok" message back to the client Web browser.
-  cleanupCB();
+    for (var k = 0; k < dirEntries.length; k++) {
+      var filename = dirEntries[k];
+      if (filename.endsWith('.jpg')) {
+        var burialIDStr = filename.substr(0, filename.lastIndexOf('.jpg'));
+        var burialID = parseInt(burialIDStr);
+        _this.uploadImage(spath + '/' + filename, burialID, function() {});
+      }
+    }
+
+    cleanupCB();
+  };
+
+  eventEmitter.on('csvDone', updateImagesFromFiles);
+
+  // Parse CSV and update burials table.
+  var csvFilepath = spath + '/sl-cem-data.csv';
+
+  console.log('reading ' + csvFilepath);
+
+  query("delete from burials;", function(delErr, delResult) {
+    if (delErr) {
+      console.log('Cannot empty burials table.  Aborting.');
+    } else {
+      query("ALTER SEQUENCE burials_id_seq RESTART WITH 1;", function(altErr, altResult) {
+        if (altErr) {
+          console.log('Cannot reset burials table auto increment.  Aborting.');
+        } else {
+          fs.readFile(csvFilepath, function(err, buf) {
+            lines = buf.toString().split('\n');
+            var firstLine = true;
+            var nrows = 0;
+
+            lines.forEach(function(line) {
+              if (firstLine) {
+                firstLine = false;
+                return;
+              } else if (line == "") {
+	        return;
+	      }
+
+              cols = splitCols(line);
+
+              query('insert into burials (id, sd_type, sd, lot, space, lot_owner, year_purch, first_name, last_name, sex, birth_date, birth_place, death_date, age, death_place, death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22);',
+                [ cols[0],
+                  cols[1],
+                  cols[2],
+                  cols[3],
+                  cols[4],
+                  cols[5],
+                  cols[6],
+                  cols[7],
+                  cols[8],
+                  cols[9],
+                  cols[10],
+                  cols[11],
+                  cols[12],
+                  cols[13],
+                  cols[14],
+                  cols[15],
+                  cols[16],
+                  cols[17],
+                  cols[18],
+                  cols[19],
+                  cols[20],
+                  cols[21]
+                ], function(err, result) {
+                  if (err) {
+                    console.log(err);
+                  } else {
+	            nrows++;
+	            //console.log('inserted ' + nrows + ' rows into the DB');
+	          }
+              });
+            }); // end of reading file
+            
+	    eventEmitter.emit('csvDone');
+
+          });
+	}
+      });
+    }
+  });
+
 };
 
 
@@ -328,9 +359,6 @@ module.exports.restoreBurialsFromFiles = function restoreBurialsFromFiles(spath,
  *                      the update was successful
  */
 module.exports.updateBurial = function updateBurial(filename, burialID, lat, lng, cb) {
-  var fs = require('fs');
-  var query = require('../utils/db-utils.js').queryfn();
-
   var img = fs.readFileSync(filename);
 
   query("update burials set headstone_img = $1, lat = $2, lng = $3 where id = $4",
@@ -349,8 +377,6 @@ module.exports.updateBurial = function updateBurial(filename, burialID, lat, lng
 
 /**
  * Updates a burial with a headstone image.
- * This function is responsible for deleting/unlinking the headstone image file
- * upon a successful update.
  *
  * @param {String} filename is the file containing the headstone image.
  * @param {Number} burialID is the database ID of the burial
@@ -358,9 +384,6 @@ module.exports.updateBurial = function updateBurial(filename, burialID, lat, lng
  *                      the update was successful
  */
 module.exports.uploadImage = function uploadImage(filename, burialID, cb) {
-  var fs = require('fs');
-  var query = require('../utils/db-utils.js').queryfn();
-
   var img = fs.readFileSync(filename);
 
   query("update burials set headstone_img = $1 where id = $2", [img, burialID], 
@@ -369,7 +392,6 @@ module.exports.uploadImage = function uploadImage(filename, burialID, cb) {
         console.log(err);
         cb(false);
       } else {
-        fs.unlinkSync(filename);
         cb(true);
       }
     });
