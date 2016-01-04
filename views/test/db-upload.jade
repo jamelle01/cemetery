@@ -1,0 +1,7 @@
+doctype html
+html
+  head
+  body
+    form(action="/api/db-upload", method="POST", enctype="multipart/form-data")
+      input(name="zipfile",type="file",accept="application/zip")
+      input(type="submit", value="Submit")

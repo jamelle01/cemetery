@@ -26,4 +26,8 @@ router.get('/test/img-upload', function(req, res) {
   res.render('test/img-upload', { });
 });
 
+router.get('/test/db-upload', function(req, res) {
+  res.render('test/db-upload', { });
+});
+
 module.exports = router;

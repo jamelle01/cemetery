@@ -1,4 +1,56 @@
 /**
+ * String.endsWith() implemementation
+ */
+if (!String.prototype.endsWith) {
+  String.prototype.endsWith = function(searchString, position) {
+    var subjectString = this.toString();
+    if  ( typeof position !== 'number'
+       || !isFinite(position)
+       || Math.floor(position) !== position
+       || position > subjectString.length)
+    {
+      position = subjectString.length;
+    }
+    position -= searchString.length;
+    var lastIndex = subjectString.indexOf(searchString, position);
+    return lastIndex !== -1 && lastIndex === position;
+  };
+}
+
+
+/**
+ * Helper function for restoreBurialsFromFiles() that splits a CSV line into its column values.
+ *
+ * @param {String} line is a comma-separated line to be split into an Array of values,
+ *                  some of which may contain spaces.
+ */
+function splitCols(line) {
+  var buf = "";
+  var cols = new Array();
+  var inQuotedString = false;
+  for (var i = 0; i < line.length; i++) {
+    if (line[i] == "," && !inQuotedString) {
+      cols.push(buf);
+      buf = "";
+    } else if (line[i] == "\"") {
+      inQuotedString = !inQuotedString;
+    } else {
+      buf = buf + line[i];
+    }
+  }
+  if (buf == "\r") {
+    cols.push("");
+  } else if (buf != "") {
+    cols.push(buf);
+  } else if (cols.length < 20) {
+    cols.push("");
+  }
+
+  return cols;
+}
+
+
+/**
  * Retrieves all burial objects and passes them to the given callback function.
  *
  * @param {Function} cb is a Function(Array) where the Array contains each burial object.
@@ -130,6 +182,139 @@ module.exports.searchBurials = function searchBurials(colNames, colValues, cb) {
 
 
 /**
+ * Removes all burial objects from the database.
+ *
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the operation was successful
+ */
+module.exports.removeBurials = function removeBurials(cb) {
+  var query = require('../utils/db-utils.js').queryfn();
+  query("delete from burials", [], 
+    function(ignErr, ignRows) {
+      cb(true);
+    });
+};
+
+
+/**
+ * Backs up all burial objects from the database by copying them to the burials backup table.
+ * If there are no burial objects to backup, this function will fail.
+ *
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the operation was successful; cb will be passed 'false' if there
+ *                      are no burial objects available to back up.
+ */
+module.exports.backupBurialsToTable = function backupBurialsToTable(cb) {
+  var query = require('../utils/db-utils.js').queryfn();
+  query("select * from burials", [], function(err, rows) {
+    if (rows != undefined && rows.length > 0) {
+      query("delete from burials_backup", [], function(ignErr1, ignRows1) {
+        query("insert into burials_backup select * from burials", [], function(ignErr2, ignRows2) {
+          cb(true);
+        });
+      });
+    } else {
+      cb(false);
+    }
+  });
+};
+
+
+/**
+ * Removes all burial objects from the database and restores the contents from the burials backup table.
+ * The caller should have a pretty darn good idea of what lies in the backup table before calling
+ * this function.
+ *
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the operation was successful
+ */
+module.exports.restoreBurialsFromTable = function restoreBurialsFromTable(cb) {
+  var query = require('../utils/db-utils.js').queryfn();
+  query("delete from burials", [], 
+    function(ignErr, ignRows) {
+      query("insert into burials select * from burials_backup", [], 
+        function(err, rows) {
+          cb(true);
+        });
+    });
+};
+
+/**
+ * Removes all burial objects from the database and restores the contents from the burials backup table.
+ * The caller should have a pretty darn good idea of what lies in the backup table before calling
+ * this function.
+ *
+ * @param {String}   spath is the directory containing sl-cem-data.csv and the headstone images JPEGs.
+ * @param {Function} cb is a Function(Boolean) where the Boolean indicates whether
+ *                      the operation was successful
+ */
+module.exports.restoreBurialsFromFiles = function restoreBurialsFromFiles(spath, cleanupCB) {
+  // Parse CSV and update burials table.
+  var csvFilepath = spath + 'sl-cem-data.csv';
+  var DEF_LAT = 0;
+  var DEF_LNG = 0;
+
+  fs.readFile(csvFilepath, function(err, buf) {
+    lines = buf.toString().split('\n');
+    var firstLine = true;
+
+    lines.forEach(function(line) {
+      if (firstLine) {
+        firstLine = false;
+        return;
+      }
+
+      cols = splitCols(line);
+
+      query('insert into burials (sd_type, sd, lot, space, lot_owner, year_purch, first_name, last_name, sex, birth_date, birth_place, death_date, age, death_place, death_cause, burial_date, notes, more_notes, hidden_notes, lat, lng) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21);',
+        [ cols[1],
+          cols[2],
+          cols[3],
+          cols[4],
+          cols[5],
+          cols[6],
+          cols[7],
+          cols[8],
+          cols[9],
+          cols[10],
+          cols[11],
+          cols[12],
+          cols[13],
+          cols[14],
+          cols[15],
+          cols[16],
+          cols[17],
+          cols[18],
+          cols[19],
+          DEF_LAT,
+          DEF_LNG
+        ], 
+        function(err, result) {
+          if (err) {
+            console.log(err);
+          }
+      });
+
+  // For each image, update the headstone image in burials.
+  //this.uploadImage(filename, burialIDFromFilename, cb);
+  var dirEntries = fs.readdirSync(spath);
+  for (var k = 0; k < dirEntries.length; k++) {
+    var filename = dirEntries[k];
+    if (filename.endsWith('.jpg')) {
+      var burialIDStr = filename.substr(0, filename.lastIndexOf('.jpg'));
+      var burialID = parseInt(burialIDStr);
+      this.uploadImage(filename, burialID, function() {});
+    }
+  }
+
+  // Pass control to the cleanup callback function (probably defined by the caller).
+  // The cleanup callback function will most likely remove the spath dir and all its contents,
+  // and then send an "ok" message back to the client Web browser.
+  cleanupCB();
+};
+
+
+/**
  * Updates a burial with latitude, longitude, and a headstone image.
  * This function is responsible for deleting/unlinking the headstone image file
  * upon a successful update.
@@ -187,8 +372,6 @@ module.exports.uploadImage = function uploadImage(filename, burialID, cb) {
         cb(true);
       }
     });
-  // FIXME Will we want to check the image for EXIF location data, and then also
-  // update lat/lng in burials?
 };
 
 
@@ -305,11 +488,3 @@ module.exports.extractImages = function extractImages(dir, cb) {
       cb(true);
     });
 };
-
-// TODO:
-// backup and restore methods for burials_backup table
-//  backup -->  delete from burials_backup;
-//              insert into burials_backup select * from burials;
-//  restore --> delete from burials;
-//              insert into burials select * from burials_backup;
-

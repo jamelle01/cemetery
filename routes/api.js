@@ -5,6 +5,7 @@ var upload = multer({ dest: 'uploads/' });
 var fs = require('fs');
 var archiver = require('archiver');
 var rmdir = require('rimraf');
+var decompress = require('decompress');
 
 var svc = require('../services/burials.js');
 
@@ -138,6 +139,10 @@ router.get('/img-download/:id', function(req, res) {
 
 // GET /api/db-download
 router.get('/db-download', function(req, res) {
+  /**
+   * ddir is the directory where the zip file will reside
+   * sdir is the staging directory for the contents of the zip file
+   */
   var ddir = 'downloads';
   var sdir = ddir + '/sl-cem-data';
 
@@ -207,8 +212,35 @@ router.get('/db-download', function(req, res) {
 
 // POST /api/db-upload
 router.post('/db-upload', upload.single('zipfile'), function(req, res) {
-  res.send("/api/db-upload not yet implemented")
-  // We have req.file.path and any req.body.* params
+  var dateStr = (new Date())
+                  .toISOString()
+                  .replace('-','')
+                  .replace('-','')
+                  .replace(':','')
+                  .replace(':','')
+                  .substr(0,15);
+
+  var spath = 'uploads/sl-cem-data-' + dateStr;
+
+  try {
+    new decompress({mode: '755'})
+      .src(req.file.path)
+      .dest(spath)
+      .use(decompress.zip({strip: 1}))
+      .run(function(err, files) {
+        svc.backupBurialsToTable(function(success) {
+          svc.restoreBurialsFromFiles(spath, function() {
+            // Clean up and respond.
+            fs.unlinkSync(req.file.path);
+            rmdir(spath, function(err) {});
+            res.send('ok')
+          });
+        });
+      });
+  } catch (e) {
+    console.log(e);
+    res.send('error');
+  }
 });
 
 
