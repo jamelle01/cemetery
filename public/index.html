@@ -146,10 +146,19 @@ function updateMarkers(ary) {
 
 function openInfowindow(marker) {
     var content = "<h4>" + marker.first_name + " " + marker.last_name + "</h4>"
-                + "Born: " + marker.birth_date
-                + "<br/>"
-                + "Died: " + marker.death_date
-                + "<br/><img style=\"width: 200px;\" src=\"/api/img-download/" + marker.id + "\" />";
+                + "<br/><img style=\"width: 200px;\" src=\"/api/img-download/"
+                      + marker.id + "\" /><br/>"
+                + "Born Date: " + marker.birth_date
+		+ "<br/>"
+                + "Born Place: " + marker.birth_place
+		+ "<br/>"
+                + "Death Date: " + marker.death_date
+		+ "<br/>"
+                + "Death Place: " + marker.death_place
+		+ "<br/>"
+                + "Burial Date: " + marker.burial_date
+		+ "<br/>"
+                + "Lot Owner: " + marker.lot_owner;
     infowindow.setContent(content);
     infowindow.open(map, marker);
 }
@@ -182,7 +191,6 @@ function placeMarker(burial) {
     marker.hidden_notes =  burial.hidden_notes;
     marker.lat =           burial.lat;
     marker.lng =           burial.lng;           
-    marker.img =           burial.img;
     markers.push(marker);
     google.maps.event.addListener(marker, 'click', function(evt) {
         openInfowindow(this);
