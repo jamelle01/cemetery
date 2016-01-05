@@ -89,32 +89,32 @@ function initialize() {
 }
 
 function bitPitEgg() {
-    var burial = {
-        id            : 0,
-        sd_type       : "",
-        sd            : "",
-        lot           : "",
-        space         : "",
-        lot_owner     : "",
-        year_purch    : "",
-        first_name    : "The Bit Pit, ",
-        last_name     : "Home of BVU Computer Science",
-        sex           : "",
-        birth_date    : "N/A",
-        birth_place   : "",
-        death_date    : "N/A",
-        age           : "",
-        death_place   : "",
-        death_cause   : "",
-        burial_date   : "",
-        notes         : "",
-        more_notes    : "",
-        hidden_notes  : "",
-        lat           : 42.641333,
-        lng           : -95.211234,
-        img           : ""
-    };
-    return burial;
+  var burial = {
+    id            : 0,
+    sd_type       : "",
+    sd            : "",
+    lot           : "",
+    space         : "",
+    lot_owner     : "",
+    year_purch    : "",
+    first_name    : "The Bit Pit, ",
+    last_name     : "Home of BVU Computer Science",
+    sex           : "",
+    birth_date    : "N/A",
+    birth_place   : "",
+    death_date    : "N/A",
+    age           : "",
+    death_place   : "",
+    death_cause   : "",
+    burial_date   : "",
+    notes         : "",
+    more_notes    : "",
+    hidden_notes  : "",
+    lat           : 42.641333,
+    lng           : -95.211234,
+    img           : ""
+  };
+  return burial;
 }
 
 function clearMarkers() {
@@ -145,56 +145,56 @@ function updateMarkers(ary) {
 }
 
 function openInfowindow(marker) {
-    var content = "<h4>" + marker.first_name + " " + marker.last_name + "</h4>"
-                + "<br/><img style=\"width: 200px;\" src=\"/api/img-download/"
-                      + marker.id + "\" /><br/>"
-                + "Born Date: " + marker.birth_date
-		+ "<br/>"
-                + "Born Place: " + marker.birth_place
-		+ "<br/>"
-                + "Death Date: " + marker.death_date
-		+ "<br/>"
-                + "Death Place: " + marker.death_place
-		+ "<br/>"
-                + "Burial Date: " + marker.burial_date
-		+ "<br/>"
-                + "Lot Owner: " + marker.lot_owner;
-    infowindow.setContent(content);
-    infowindow.open(map, marker);
+  var content = "<h4>" + marker.first_name + " " + marker.last_name + "</h4>"
+              + "<br/><img style=\"width: 200px;\" src=\"/api/img-download/"
+                    + marker.id + "\" /><br/>"
+              + "Born Date: " + marker.birth_date
+              + "<br/>"
+              + "Born Place: " + marker.birth_place
+              + "<br/>"
+              + "Death Date: " + marker.death_date
+              + "<br/>"
+              + "Death Place: " + marker.death_place
+              + "<br/>"
+              + "Burial Date: " + marker.burial_date
+              + "<br/>"
+              + "Lot Owner: " + marker.lot_owner;
+  infowindow.setContent(content);
+  infowindow.open(map, marker);
 }
 
 function placeMarker(burial) {
-    var marker=new google.maps.Marker({
-        position: new google.maps.LatLng(burial.lat, burial.lng),
-        map: map
-    });
-    // Add info to the marker so that we can display it later in the infowindow.
-    marker.id =            burial.id;
-    marker.sd_type =       burial.sd_type;
-    marker.sd =            burial.sd;
-    marker.lot =           burial.lot;
-    marker.space =         burial.space;
-    marker.lot_owner =     burial.lot_owner;
-    marker.year_purch =    burial.year_purch;
-    marker.first_name =    burial.first_name;
-    marker.last_name =     burial.last_name;
-    marker.sex =           burial.sex;
-    marker.birth_date =    burial.birth_date;
-    marker.birth_place =   burial.birth_place;
-    marker.death_date =    burial.death_date;
-    marker.age =           burial.age;
-    marker.death_place =   burial.death_place;
-    marker.death_cause =   burial.death_cause;
-    marker.burial_date =   burial.burial_date;
-    marker.notes =         burial.notes;
-    marker.more_notes =    burial.more_notes;
-    marker.hidden_notes =  burial.hidden_notes;
-    marker.lat =           burial.lat;
-    marker.lng =           burial.lng;           
-    markers.push(marker);
-    google.maps.event.addListener(marker, 'click', function(evt) {
-        openInfowindow(this);
-    });
+  var marker=new google.maps.Marker({
+      position: new google.maps.LatLng(burial.lat, burial.lng),
+      map: map
+  });
+  // Add info to the marker so that we can display it later in the infowindow.
+  marker.id =            burial.id;
+  marker.sd_type =       burial.sd_type;
+  marker.sd =            burial.sd;
+  marker.lot =           burial.lot;
+  marker.space =         burial.space;
+  marker.lot_owner =     burial.lot_owner;
+  marker.year_purch =    burial.year_purch;
+  marker.first_name =    burial.first_name;
+  marker.last_name =     burial.last_name;
+  marker.sex =           burial.sex;
+  marker.birth_date =    burial.birth_date;
+  marker.birth_place =   burial.birth_place;
+  marker.death_date =    burial.death_date;
+  marker.age =           burial.age;
+  marker.death_place =   burial.death_place;
+  marker.death_cause =   burial.death_cause;
+  marker.burial_date =   burial.burial_date;
+  marker.notes =         burial.notes;
+  marker.more_notes =    burial.more_notes;
+  marker.hidden_notes =  burial.hidden_notes;
+  marker.lat =           burial.lat;
+  marker.lng =           burial.lng;           
+  markers.push(marker);
+  google.maps.event.addListener(marker, 'click', function(evt) {
+      openInfowindow(this);
+  });
 }
 
 
@@ -252,52 +252,53 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <script type="text/javascript">
 
 function handleSearchResponse(res) {
-    res = eval(res);
-    clearMarkers();
-    if (res.length == 0) {
-        $('#error-message').html('No results found.');
-    } else {
-        updateMarkers(res);
-        $('#search-btn').dropdown('toggle');
-        $('#error-message').html('');
-    }
+  res = eval(res);
+  clearMarkers();
+  if (res.length == 0) {
+    $('#error-message').html('No results found.');
+  } else {
+    updateMarkers(res);
+    $('#search-btn').dropdown('toggle');
+    $('#error-message').html('');
+  }
 }
 
 $(document).ready(function() {
-    $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
-        // Prevent clicks on the dropdown from dismissing the dropdown.
-        e.stopPropagation();
-    });
+  $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
+    // Prevent clicks on the dropdown from dismissing the dropdown.
+    e.stopPropagation();
+  });
 
-    $('#do-search-btn').click(function(e) {
-        // Make 'searching' feedback, probably next to do-search-btn.
-        // Fire jQuery Ajax req
-        $.post( '/api/search',
-                {
-                    first_name:  $('#first_name').get(0).value,
-                    last_name:   $('#last_name').get(0).value,
-                    birth_place: $('#birth_place').get(0).value,
-                    birth_date:  $('#birth_date').get(0).value,
-                    death_place: $('#death_place').get(0).value,
-                    death_date:  $('#death_date').get(0).value,
-                    lot_owner:   $('#lot_owner').get(0).value
-                },
-                handleSearchResponse );
+  $('#do-search-btn').click(function(e) {
+    // Make 'searching' feedback, probably next to do-search-btn.
+    // Fire jQuery Ajax req
+    $.post( '/api/search',
+      {
+        first_name:  $('#first_name').get(0).value,
+        last_name:   $('#last_name').get(0).value,
+        birth_place: $('#birth_place').get(0).value,
+        birth_date:  $('#birth_date').get(0).value,
+        death_place: $('#death_place').get(0).value,
+        death_date:  $('#death_date').get(0).value,
+        lot_owner:   $('#lot_owner').get(0).value
+      },
+      handleSearchResponse );
     });
 
 
     $('#reset-btn').click(function(e) {
-        clearMarkers();
-        map.panTo(defaultCenter);
+      clearMarkers();
+      map.panTo(defaultCenter);
     });
 
+/*
     $('.btn-group').on('show.bs.dropdown', function () {
-        console.log('got .dropdown-menu show.bs.dropdown');
-    })    
+      console.log('got .dropdown-menu show.bs.dropdown');
+    });    
     $('.btn-group').on('hide.bs.dropdown', function () {
-        console.log('got .dropdown-menu hide.bs.dropdown');
-    })    
-
+      console.log('got .dropdown-menu hide.bs.dropdown');
+    });   
+*/  
 });
 
 
