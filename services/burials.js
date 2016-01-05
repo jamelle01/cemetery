@@ -125,7 +125,7 @@ module.exports.searchBurials = function searchBurials(colNames, colValues, cb) {
   for (var ci = 0; ci < colNames.length; ci++) {
     sqlWhere = sqlWhere + colNames[ci] + " like $" + (ci+1);
     if (ci + 1 != colNames.length) {
-      sqlWhere = sqlWhere + "and ";
+      sqlWhere = sqlWhere + " and ";
     }
   }
 
