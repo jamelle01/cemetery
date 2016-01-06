@@ -92,6 +92,7 @@ function initialize() {
 
   missingMarker = new google.maps.Marker({
       position: missingLatLng,
+      icon: 'images/markers/red.png',
       map: null
   });
   google.maps.event.addListener(missingMarker, 'click', function(evt) {
@@ -200,8 +201,9 @@ function openInfowindow(marker) {
 }
 
 function makeBurialMarker(burial) {
-  var marker=new google.maps.Marker({
+  var marker = new google.maps.Marker({
       position: new google.maps.LatLng(burial.lat, burial.lng),
+      icon: 'images/markers/green-dot.png',
       map: map
   });
 
