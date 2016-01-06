@@ -133,7 +133,6 @@ function bitPitEgg() {
  * Clears burial markers and the missing marker.
  */
 function clearMarkers() {
-  console.log(markers);
   for (var i = 0; i < markers.length; i++) {
     markers[i].setMap(null);
     if (missingMarker != markers[i]) {
@@ -155,13 +154,11 @@ function updateMarkers(ary) {
   for (var i = 0; i < ary.length; i++) {
     if (ary[i].lat != 0 && ary[i].lng != 0) {
       // Place burial marker.
-      console.log('placing marker ' + i + ', coords ' + ary[i].lat + ',' + ary[i].lng);
       marker = makeBurialMarker(ary[i]);
       markers.push(marker);
     } else {
       if (missingMarker.map != map) {
         // Activating missing marker.
-        console.log('activating missing marker');
         missingMarker.setMap(map);
         missingMarker.numberMissing = 0;
         markers.push(missingMarker);
@@ -170,7 +167,18 @@ function updateMarkers(ary) {
       }
     }
   }
-  console.log(markers);
+}
+
+/**
+ * san is short for 'sanitize'.  Instead of showing blanks for field values,
+ * if a field lacks a value we will show its value as 'Not listed'.
+ */
+function san(txt) {
+  if (txt == undefined || txt.trim() == "") {
+    return "<em>Not listed</em>";
+  } else {
+    return txt;
+  }
 }
 
 function openInfowindow(marker) {
@@ -184,17 +192,17 @@ function openInfowindow(marker) {
     var content = "<h4>" + marker.first_name + " " + marker.last_name + "</h4>"
                 + "<br/><img style=\"width: 200px;\" src=\"/api/img-download/"
                       + marker.id + "\" /><br/>"
-                + "Born Date: " + marker.birth_date
+                + "<strong>Born Date:</strong> " + san(marker.birth_date)
                 + "<br/>"
-                + "Born Place: " + marker.birth_place
+                + "<strong>Born Place:</strong> " + san(marker.birth_place)
                 + "<br/>"
-                + "Death Date: " + marker.death_date
+                + "<strong>Death Date:</strong> " + san(marker.death_date)
                 + "<br/>"
-                + "Death Place: " + marker.death_place
+                + "<strong>Death Place:</strong> " + san(marker.death_place)
                 + "<br/>"
-                + "Burial Date: " + marker.burial_date
+                + "<strong>Burial Date:</strong> " + san(marker.burial_date)
                 + "<br/>"
-                + "Lot Owner: " + marker.lot_owner;
+                + "<strong>Lot Owner:</strong> " + san(marker.lot_owner);
     infowindow.setContent(content);
   }
   infowindow.open(map, marker);
