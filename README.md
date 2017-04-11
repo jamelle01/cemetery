@@ -1,6 +1,6 @@
 # Storm Lake Cemetery (sl-cem)
 
-An interactive map application for the Storm Lake cemetery.
+An interactive map application for the Storm Lake cemetery.  This app has been retired and replaced by [cemetery-map](https://github.com/bvcompsci/cemetery-map).
 
 ## Quick setup
 
